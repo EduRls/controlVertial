@@ -1,0 +1,271 @@
+.supervisor-inspection-screen {
+  min-height: 100%;
+  background: #f7f9fc;
+  padding: 22px 16px 110px;
+}
+
+.supervisor-inspection-header {
+  margin-bottom: 18px;
+}
+
+.supervisor-inspection-header h1 {
+  margin: 0;
+  font-size: 31px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #3a3a3a;
+  letter-spacing: -0.02em;
+}
+
+.supervisor-inspection-header p {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #6e7f92;
+}
+
+.supervisor-inspection-card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 18px 16px;
+  box-shadow: 0 10px 24px rgba(31, 45, 61, 0.06);
+  margin-bottom: 16px;
+  border: 1px solid #eef2f6;
+}
+
+.supervisor-inspection-card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.supervisor-inspection-card__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(126, 87, 194, 0.12);
+  color: #7e57c2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.supervisor-inspection-card__icon--danger {
+  background: rgba(242, 154, 154, 0.16);
+  color: #d96f6f;
+}
+
+.supervisor-inspection-card__title h2 {
+  margin: 0;
+  color: #222b38;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.supervisor-inspection-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.supervisor-inspection-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.supervisor-inspection-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.supervisor-inspection-field label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #7a8898;
+}
+
+.supervisor-inspection-field input,
+.supervisor-inspection-card textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #dde5ee;
+  border-radius: 16px;
+  background: #fcfdff;
+  padding: 13px 14px;
+  font-size: 14px;
+  color: #2b3442;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.supervisor-inspection-field input:focus,
+.supervisor-inspection-card textarea:focus {
+  border-color: #4f7fbf;
+  box-shadow: 0 0 0 4px rgba(79, 127, 191, 0.12);
+}
+
+.supervisor-inspection-card textarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.45;
+}
+
+.supervisor-inspection-summary {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.supervisor-inspection-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eef3f8;
+  color: #5f7082;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.supervisor-inspection-checklist {
+  display: flex;
+  flex-direction: column;
+}
+
+.supervisor-inspection-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.supervisor-inspection-row:last-child {
+  border-bottom: none;
+  padding-bottom: 2px;
+}
+
+.supervisor-inspection-row__label {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #243041;
+  flex: 1;
+}
+
+.supervisor-switch {
+  position: relative;
+  width: 42px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: #dfe6ee;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.22s ease;
+  flex-shrink: 0;
+}
+
+.supervisor-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.18);
+  transition: transform 0.22s ease;
+}
+
+.supervisor-switch--active {
+  background: #4f7fbf;
+}
+
+.supervisor-switch--active .supervisor-switch__thumb {
+  transform: translateX(16px);
+}
+
+.supervisor-inspection-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.supervisor-action-btn {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: 18px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.supervisor-action-btn:active {
+  transform: scale(0.99);
+}
+
+.supervisor-action-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.supervisor-action-btn--primary {
+  background: #4f7fbf;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(79, 127, 191, 0.22);
+}
+
+.supervisor-action-btn--danger {
+  background: #f29a9a;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(242, 154, 154, 0.22);
+}
+
+.supervisor-feedback {
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.supervisor-feedback--error {
+  background: #fff1f1;
+  color: #c45555;
+  border: 1px solid #f3c1c1;
+}
+
+.supervisor-feedback--success {
+  background: #edf9f2;
+  color: #2c8b61;
+  border: 1px solid #bfe7d0;
+}
+
+@media (max-width: 360px) {
+  .supervisor-inspection-header h1 {
+    font-size: 28px;
+  }
+
+  .supervisor-inspection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .supervisor-inspection-row__label {
+    font-size: 13.5px;
+  }
+}

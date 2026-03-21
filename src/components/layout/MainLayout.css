@@ -1,0 +1,33 @@
+.main-layout {
+  min-height: 100vh;
+  background: #f7f9fc;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-layout__content {
+  flex: 1;
+  padding-bottom: 90px;
+}
+
+.main-layout--admin {
+  min-height: 100vh;
+  background: #f7f9fc;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+}
+
+.main-layout__content--admin {
+  padding: 32px;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-layout--admin {
+    grid-template-columns: 1fr;
+  }
+
+  .main-layout__content--admin {
+    padding: 20px;
+  }
+}

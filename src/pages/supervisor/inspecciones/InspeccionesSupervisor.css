@@ -1,0 +1,140 @@
+.supervisor-screen {
+  min-height: 100%;
+  background: #f7f9fc;
+  padding: 24px 16px 110px;
+}
+
+.supervisor-screen__header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  color: #3a3a3a;
+}
+
+.supervisor-screen__header p {
+  margin: 6px 0 0;
+  color: #748397;
+  font-size: 14px;
+}
+
+.supervisor-chips {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0 20px;
+  overflow-x: auto;
+}
+
+.supervisor-chip {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #e8edf3;
+  color: #6f8092;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.supervisor-chip--active {
+  background: #4f7fbf;
+  color: #fff;
+}
+
+.supervisor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.supervisor-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(31, 45, 61, 0.06);
+}
+
+.supervisor-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.supervisor-card__top h3 {
+  margin: 0;
+  color: #3a3a3a;
+  font-size: 16px;
+}
+
+.supervisor-card__top p {
+  margin: 6px 0 0;
+  color: #7a8797;
+  font-size: 13px;
+}
+
+.supervisor-card__meta {
+  margin-top: 12px;
+  display: flex;
+  gap: 16px;
+  color: #7a8797;
+  font-size: 13px;
+}
+
+.supervisor-card__summary {
+  margin: 12px 0 0;
+  color: #556374;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.supervisor-badge {
+  align-self: flex-start;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.supervisor-badge--pendiente {
+  background: #f6d97a;
+  color: #5f4d11;
+}
+
+.supervisor-badge--aprobada {
+  background: #8ed1b2;
+  color: #1c5f46;
+}
+
+.supervisor-badge--observada {
+  background: #f29a9a;
+  color: #7b2727;
+}
+.supervisor-state {
+  margin: 10px 0 0;
+  color: #6f8092;
+  font-size: 14px;
+}
+
+.supervisor-state--error {
+  color: #c45555;
+}
+
+.supervisor-empty {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px 16px;
+  box-shadow: 0 8px 24px rgba(31, 45, 61, 0.06);
+  text-align: center;
+}
+
+.supervisor-empty h3 {
+  margin: 0;
+  color: #3a3a3a;
+  font-size: 16px;
+}
+
+.supervisor-empty p {
+  margin: 8px 0 0;
+  color: #7a8797;
+  font-size: 14px;
+  line-height: 1.45;
+}
