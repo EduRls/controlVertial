@@ -5,8 +5,8 @@ import {
   onSnapshot,
   orderBy,
   query,
-  updateDoc,
   Timestamp,
+  updateDoc,
 } from 'firebase/firestore'
 import { Pencil, Plus, Search, UserCheck, UserX } from 'lucide-react'
 import { db } from '../../../firebase/firebase'
@@ -22,10 +22,23 @@ export type Empleado = {
   nombre: string
   correo: string
   telefono: string
-  rol: RolUsuario
+  rol: 'operador' | 'supervisor'
   rutaAsignada?: string
   fechaAlta?: Timestamp | null
   activo: boolean
+  fichaIdentificacion?: {
+    numeroEmpleado?: string
+    cargo?: string
+    genero?: string
+    edad?: number
+    area?: string
+    telefono?: string
+  } | null
+  contactoEmergencia?: {
+    nombre?: string
+    parentesco?: string
+    telefono?: string
+  } | null
 }
 
 function getIniciales(nombre: string) {
@@ -57,6 +70,7 @@ export default function EmpleadosAdmin() {
         const items: Empleado[] = snapshot.docs
           .map((docSnap) => {
             const data = docSnap.data() as Omit<Empleado, 'id'>
+
             return {
               id: docSnap.id,
               nombre: data.nombre ?? '',
@@ -66,9 +80,31 @@ export default function EmpleadosAdmin() {
               rutaAsignada: data.rutaAsignada ?? '',
               fechaAlta: data.fechaAlta ?? null,
               activo: data.activo ?? true,
+
+              fichaIdentificacion: data.fichaIdentificacion
+                ? {
+                    numeroEmpleado:
+                      data.fichaIdentificacion.numeroEmpleado ?? '',
+                    cargo: data.fichaIdentificacion.cargo ?? '',
+                    genero: data.fichaIdentificacion.genero ?? '',
+                    edad: data.fichaIdentificacion.edad ?? undefined,
+                    area: data.fichaIdentificacion.area ?? '',
+                    telefono: data.fichaIdentificacion.telefono ?? '',
+                  }
+                : null,
+
+              contactoEmergencia: data.contactoEmergencia
+                ? {
+                    nombre: data.contactoEmergencia.nombre ?? '',
+                    parentesco: data.contactoEmergencia.parentesco ?? '',
+                    telefono: data.contactoEmergencia.telefono ?? '',
+                  }
+                : null,
             }
           })
-          .filter((item) => item.rol === 'operador' || item.rol === 'supervisor')
+          .filter(
+            (item) => item.rol === 'operador' || item.rol === 'supervisor'
+          )
 
         setEmpleados(items)
         setLoading(false)
@@ -87,14 +123,19 @@ export default function EmpleadosAdmin() {
     const term = search.trim().toLowerCase()
 
     return empleados.filter((empleado) => {
+      const numeroEmpleado =
+        empleado.fichaIdentificacion?.numeroEmpleado?.toLowerCase() ?? ''
+
       const matchSearch =
         !term ||
         empleado.nombre.toLowerCase().includes(term) ||
         empleado.correo.toLowerCase().includes(term) ||
         empleado.telefono.toLowerCase().includes(term) ||
-        (empleado.rutaAsignada ?? '').toLowerCase().includes(term)
+        (empleado.rutaAsignada ?? '').toLowerCase().includes(term) ||
+        numeroEmpleado.includes(term)
 
-      const matchRol = rolFiltro === 'todos' ? true : empleado.rol === rolFiltro
+      const matchRol =
+        rolFiltro === 'todos' ? true : empleado.rol === rolFiltro
 
       const matchEstado =
         estadoFiltro === 'todos'
@@ -108,7 +149,9 @@ export default function EmpleadosAdmin() {
   }, [empleados, search, rolFiltro, estadoFiltro])
 
   const totalOperadores = empleados.filter((e) => e.rol === 'operador').length
-  const totalSupervisores = empleados.filter((e) => e.rol === 'supervisor').length
+  const totalSupervisores = empleados.filter(
+    (e) => e.rol === 'supervisor'
+  ).length
   const totalActivos = empleados.filter((e) => e.activo).length
 
   async function handleToggleActivo(empleado: Empleado) {
@@ -180,7 +223,7 @@ export default function EmpleadosAdmin() {
             <Search size={18} />
             <input
               type="text"
-              placeholder="Buscar por nombre, correo, teléfono o ruta..."
+              placeholder="Buscar por nombre, correo, teléfono, ruta o número de empleado..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -241,6 +284,14 @@ export default function EmpleadosAdmin() {
                       <strong>{empleado.nombre}</strong>
                       <span>{empleado.correo}</span>
                       <small>{empleado.telefono}</small>
+
+                      {empleado.rol === 'operador' &&
+                        empleado.fichaIdentificacion?.numeroEmpleado && (
+                          <small className="empleados-admin__employee-meta">
+                            No. empleado:{' '}
+                            {empleado.fichaIdentificacion.numeroEmpleado}
+                          </small>
+                        )}
                     </div>
                   </div>
 
@@ -260,7 +311,9 @@ export default function EmpleadosAdmin() {
 
                   <div>
                     <span
-                      className={`empleados-admin__status ${empleado.activo ? 'is-active' : 'is-inactive'}`}
+                      className={`empleados-admin__status ${
+                        empleado.activo ? 'is-active' : 'is-inactive'
+                      }`}
                     >
                       {empleado.activo ? 'Activo' : 'Inactivo'}
                     </span>
@@ -285,7 +338,11 @@ export default function EmpleadosAdmin() {
                       }`}
                       onClick={() => handleToggleActivo(empleado)}
                     >
-                      {empleado.activo ? <UserX size={16} /> : <UserCheck size={16} />}
+                      {empleado.activo ? (
+                        <UserX size={16} />
+                      ) : (
+                        <UserCheck size={16} />
+                      )}
                       {empleado.activo ? 'Desactivar' : 'Activar'}
                     </button>
                   </div>

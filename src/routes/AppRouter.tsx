@@ -7,6 +7,7 @@ import NuevaRevision from '../pages/operador/nuevaRevision/NuevaRevision'
 import Perfil from '../pages/operador/perfil/perfil'
 import InspeccionesSupervisor from '../pages/supervisor/inspecciones/InspeccionesSupervisor'
 import SolicitudesSupervisor from '../pages/supervisor/solicitudes/SolicitudesSupervisor'
+import ExamenMedicoSupervisor from '../pages/supervisor/examenMedico/ExamenMedicoSupervisor'
 import NuevaInspeccionSupervisor from '../pages/supervisor/nuevaInspeccion/NuevaInspeccionSupervisor'
 import PerfilSupervisor from '../pages/supervisor/perfil/PerfilSupervisor'
 import DashboardAdmin from '../pages/administrador/dashboard/DashboardAdmin'
@@ -62,6 +63,17 @@ export default function AppRouter() {
             <ProtectedRoute allowedRoles={['supervisor']}>
               <MainLayout>
                 <InspeccionesSupervisor />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/supervisor/examen-medico"
+          element={
+            <ProtectedRoute allowedRoles={['supervisor']}>
+              <MainLayout>
+                <ExamenMedicoSupervisor />
               </MainLayout>
             </ProtectedRoute>
           }

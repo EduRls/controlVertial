@@ -13,7 +13,7 @@
 
 .empleado-form-modal__dialog {
   position: relative;
-  width: min(100%, 620px);
+  width: min(100%, 760px);
   max-height: calc(100vh - 40px);
   overflow-y: auto;
   margin: 20px auto;
@@ -100,6 +100,52 @@
   font-size: 14px;
 }
 
+.empleado-form-modal__tabs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.empleado-form-modal__tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.empleado-form-modal__tabs::-webkit-scrollbar-thumb {
+  background: #dbe4f2;
+  border-radius: 999px;
+}
+
+.empleado-form-modal__tab {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 1px solid #d8e0ef;
+  background: #f8fafd;
+  color: #7f8da4;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.empleado-form-modal__tab.is-active {
+  border-color: #3d63ff;
+  color: #2f55f4;
+  background: #eef3ff;
+  box-shadow: inset 0 0 0 1px rgba(61, 99, 255, 0.05);
+}
+
+.empleado-form-modal__panel {
+  border: 1px solid #e7edf7;
+  background: #fbfcff;
+  border-radius: 22px;
+  padding: 18px;
+}
+
 .empleado-form-modal__fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -110,6 +156,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.empleado-form-modal__field--full {
+  grid-column: 1 / -1;
 }
 
 .empleado-form-modal__field span {
@@ -124,7 +174,7 @@
   min-height: 54px;
   border: 1px solid #e3eaf5;
   border-radius: 16px;
-  background: #f8fafd;
+  background: #ffffff;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -135,6 +185,7 @@
 .empleado-form-modal__input-wrap input,
 .empleado-form-modal__input-wrap select {
   width: 100%;
+  height: 100%;
   border: none;
   outline: none;
   background: transparent;
@@ -148,7 +199,7 @@
   min-height: 78px;
   border: 1px solid #e3eaf5;
   border-radius: 18px;
-  background: #f8fafd;
+  background: #ffffff;
   padding: 16px;
   display: flex;
   align-items: center;

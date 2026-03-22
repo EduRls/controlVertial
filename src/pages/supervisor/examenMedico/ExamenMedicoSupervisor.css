@@ -1,0 +1,361 @@
+.examen-medico-page {
+  min-height: 100vh;
+  background: #f7f9fc;
+  padding: 20px 16px 120px;
+}
+
+.examen-medico-page__header {
+  margin-bottom: 18px;
+}
+
+.examen-medico-page__header h1 {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+  color: #3a3a3a;
+  font-weight: 700;
+}
+
+.examen-medico-page__header p {
+  margin: 8px 0 0;
+  color: #7a8699;
+  font-size: 0.98rem;
+}
+
+.examen-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 18px 16px;
+  box-shadow: 0 10px 30px rgba(31, 41, 55, 0.06);
+  margin-bottom: 18px;
+}
+
+.examen-card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: #2f3640;
+}
+
+.examen-card__title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.examen-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.examen-grid--2 {
+  grid-template-columns: 1fr;
+}
+
+.examen-grid--3 {
+  grid-template-columns: 1fr;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #7b8595;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid #d6deea;
+  background: #f9fbff;
+  border-radius: 18px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  color: #394150;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #4f7fbf;
+  box-shadow: 0 0 0 3px rgba(79, 127, 191, 0.12);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.examen-selected-user {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #eef4ff;
+  color: #4b5d78;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.radio-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.radio-group--wide {
+  margin-bottom: 14px;
+}
+
+.radio-pill {
+  border: 1px solid #d4ddeb;
+  background: #f4f7fb;
+  color: #657084;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.radio-pill.active {
+  background: #4f7fbf;
+  color: #ffffff;
+  border-color: #4f7fbf;
+}
+
+.patologicos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.patologico-row {
+  border: 1px solid #ebeff5;
+  border-radius: 18px;
+  padding: 14px;
+  background: #fcfdff;
+}
+
+.patologico-row__question {
+  font-weight: 600;
+  color: #394150;
+  margin-bottom: 10px;
+  line-height: 1.45;
+}
+
+.patologico-row__actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.examen-message {
+  margin: 10px 0 16px;
+  background: #eef4ff;
+  color: #35527c;
+  border-radius: 16px;
+  padding: 14px 16px;
+  font-weight: 600;
+}
+
+.examen-actions {
+  position: sticky;
+  bottom: 84px;
+  padding-top: 4px;
+}
+
+.btn-primary {
+  width: 100%;
+  border: none;
+  border-radius: 18px;
+  padding: 16px 18px;
+  background: #4f7fbf;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(79, 127, 191, 0.25);
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (min-width: 768px) {
+  .examen-medico-page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+
+  .examen-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .examen-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .btn-primary {
+    width: auto;
+    min-width: 280px;
+  }
+
+  .examen-actions {
+    display: flex;
+    justify-content: flex-end;
+    bottom: 24px;
+  }
+}
+
+.empleado-card-preview {
+  margin-top: 16px;
+  border: 1px solid #e8edf5;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border-radius: 22px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(31, 41, 55, 0.06);
+}
+
+.empleado-card-preview__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.empleado-card-preview__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #eef4ff;
+  color: #4f7fbf;
+}
+
+.empleado-card-preview__header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #2f3640;
+  font-weight: 700;
+}
+
+.empleado-card-preview__header p {
+  margin: 2px 0 0;
+  color: #7a8699;
+  font-size: 0.92rem;
+}
+
+.empleado-status {
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.empleado-status.is-active {
+  background: #e7f7ec;
+  color: #23824f;
+}
+
+.empleado-status.is-inactive {
+  background: #fdecec;
+  color: #b54747;
+}
+
+.empleado-card-preview__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.empleado-mini-card {
+  background: #ffffff;
+  border: 1px solid #e8edf5;
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.empleado-mini-card__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #8a95a6;
+  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+}
+
+.empleado-mini-card__value {
+  color: #2f3640;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.empleado-card-preview__details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.empleado-detail-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #536074;
+  font-size: 0.95rem;
+}
+
+.empleado-contacto-box {
+  background: #f3f7fd;
+  border: 1px solid #e1e9f5;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.empleado-contacto-box__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #40506a;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.empleado-contacto-box__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  color: #5c6778;
+  font-size: 0.94rem;
+}
+
+@media (min-width: 768px) {
+  .empleado-card-preview__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .empleado-contacto-box__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -1,19 +1,18 @@
 import { NavLink } from 'react-router-dom'
-import { ClipboardCheck, FileText, PlusSquare, UserCircle2 } from 'lucide-react'
+import { HeartPulse, FileText, PlusSquare, UserCircle2 } from 'lucide-react'
 import './FooterNavSupervisor.css'
 
 export default function FooterNavSupervisor() {
   return (
     <nav className="footer-nav-supervisor">
-
       <NavLink
-        to="/supervisor/inspecciones"
+        to="/supervisor/examen-medico"
         className={({ isActive }) =>
           `footer-nav-supervisor__item ${isActive ? 'footer-nav-supervisor__item--active' : ''}`
         }
       >
-        <ClipboardCheck size={20} />
-        <span className="footer-nav-supervisor__label">Inspecciones</span>
+        <HeartPulse size={20} />
+        <span className="footer-nav-supervisor__label">Examen médico</span>
       </NavLink>
 
       <NavLink
@@ -45,7 +44,6 @@ export default function FooterNavSupervisor() {
         <UserCircle2 size={20} />
         <span className="footer-nav-supervisor__label">Perfil</span>
       </NavLink>
-
     </nav>
   )
 }

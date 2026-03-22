@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
   Route,
   HeartPulse,
   FolderOpen,
-  Settings,
   Shield,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react'
+
+import { getAuth, signOut } from 'firebase/auth'
+
 import './AdminSidebar.css'
 
 export default function AdminSidebar() {
   const [isOpen, setIsOpen] = useState(false)
+  const navigate = useNavigate()
+  const auth = getAuth()
 
   useEffect(() => {
     const handleResize = () => {
@@ -28,6 +33,15 @@ export default function AdminSidebar() {
   }, [])
 
   const closeSidebar = () => setIsOpen(false)
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      navigate('/login') // ajusta esta ruta si es necesario
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
 
   return (
     <>
@@ -124,16 +138,14 @@ export default function AdminSidebar() {
             <span>Documentos</span>
           </NavLink>
 
-          <NavLink
-            to="/admin/configuracion"
-            onClick={closeSidebar}
-            className={({ isActive }) =>
-              `admin-sidebar__link ${isActive ? 'admin-sidebar__link--active' : ''}`
-            }
+          {/* 🔴 LOGOUT */}
+          <button
+            onClick={handleLogout}
+            className="admin-sidebar__link admin-sidebar__logout"
           >
-            <Settings size={18} />
-            <span>Configuración</span>
-          </NavLink>
+            <LogOut size={18} />
+            <span>Cerrar sesión</span>
+          </button>
         </nav>
       </aside>
     </>

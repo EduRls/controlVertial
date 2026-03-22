@@ -29,7 +29,7 @@ export default function InicioSesion() {
     }
 
     if (rol === 'supervisor') {
-      navigate('/supervisor/inspecciones', { replace: true })
+      navigate('/supervisor/examen-medico', { replace: true })
       return
     }
 

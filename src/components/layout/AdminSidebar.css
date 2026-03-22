@@ -156,3 +156,11 @@
     z-index: 110;
   }
 }
+
+.admin-sidebar__logout {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
