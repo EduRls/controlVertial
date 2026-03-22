@@ -1,0 +1,268 @@
+.empleado-form-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+}
+
+.empleado-form-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 25, 40, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.empleado-form-modal__dialog {
+  position: relative;
+  width: min(100%, 620px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  margin: 20px auto;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 18px 50px rgba(18, 34, 68, 0.2);
+  border: 1px solid rgba(79, 127, 191, 0.12);
+}
+
+.empleado-form-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid #eef2f8;
+}
+
+.empleado-form-modal__eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4f7fbf;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.empleado-form-modal__header h2 {
+  margin: 0;
+  color: #2d3750;
+  font-size: 28px;
+}
+
+.empleado-form-modal__close {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 12px;
+  background: #f4f7fb;
+  color: #61708a;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.empleado-form-modal__form {
+  padding: 24px;
+}
+
+.empleado-form-modal__profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fbff;
+  border: 1px solid #eaf1fb;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.empleado-form-modal__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #4f7fbf, #6ea3eb);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.empleado-form-modal__profile strong {
+  display: block;
+  color: #2d3750;
+  font-size: 18px;
+}
+
+.empleado-form-modal__profile span {
+  display: block;
+  margin-top: 4px;
+  color: #7d8aa1;
+  font-size: 14px;
+}
+
+.empleado-form-modal__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.empleado-form-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empleado-form-modal__field span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7d8aa1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.empleado-form-modal__input-wrap {
+  min-height: 54px;
+  border: 1px solid #e3eaf5;
+  border-radius: 16px;
+  background: #f8fafd;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  color: #7f8da4;
+}
+
+.empleado-form-modal__input-wrap input,
+.empleado-form-modal__input-wrap select {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #2d3750;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.empleado-form-modal__switch {
+  grid-column: 1 / -1;
+  min-height: 78px;
+  border: 1px solid #e3eaf5;
+  border-radius: 18px;
+  background: #f8fafd;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.empleado-form-modal__switch strong {
+  display: block;
+  color: #2d3750;
+  font-size: 15px;
+}
+
+.empleado-form-modal__switch p {
+  margin: 6px 0 0;
+  color: #7d8aa1;
+  font-size: 13px;
+}
+
+.empleado-form-modal__switch-btn {
+  width: 58px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: #d6dfea;
+  padding: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.empleado-form-modal__switch-btn span {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.empleado-form-modal__switch-btn.is-on {
+  background: #3f6fb5;
+}
+
+.empleado-form-modal__switch-btn.is-on span {
+  transform: translateX(26px);
+}
+
+.empleado-form-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.empleado-form-modal__ghost-btn,
+.empleado-form-modal__primary-btn {
+  min-height: 50px;
+  border-radius: 16px;
+  padding: 0 20px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.empleado-form-modal__ghost-btn {
+  background: #eef3fb;
+  color: #5f6f87;
+}
+
+.empleado-form-modal__primary-btn {
+  background: #3f6fb5;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(63, 111, 181, 0.22);
+}
+
+.empleado-form-modal__ghost-btn:disabled,
+.empleado-form-modal__primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .empleado-form-modal__dialog {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .empleado-form-modal__form {
+    padding: 18px;
+  }
+
+  .empleado-form-modal__header {
+    padding: 18px 18px 14px;
+  }
+
+  .empleado-form-modal__header h2 {
+    font-size: 24px;
+  }
+
+  .empleado-form-modal__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .empleado-form-modal__actions {
+    flex-direction: column-reverse;
+  }
+
+  .empleado-form-modal__ghost-btn,
+  .empleado-form-modal__primary-btn {
+    width: 100%;
+  }
+}
