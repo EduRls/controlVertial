@@ -13,6 +13,7 @@ import {
   MapPin,
   Ruler,
   ShieldCheck,
+  UserRound,
   XCircle,
 } from 'lucide-react'
 import { db } from '../../../firebase/firebase'
@@ -22,51 +23,137 @@ import './MisServicios.css'
 
 type EstatusFiltro = 'todos' | 'pendiente' | 'autorizado' | 'rechazado'
 
-type SolicitudAltura = {
+export type SolicitudAltura = {
   id: string
   folio?: string
   fechaSolicitud?: Timestamp | null
-  fechaTrabajo?: string
-  horaInicio?: string | null
   estatus?: string
   autorizacion?: boolean
+  comentariosAutorizacion?: string
+
+  operador?: {
+    uid?: string
+    nombre?: string
+    numeroEmpleado?: string
+    telefono?: string
+    correo?: string
+    rol?: string
+    rutaAsignada?: string
+    area?: string
+    cargo?: string
+  }
 
   datosGenerales?: {
-    nombreTrabajo?: string
-    lugarEjecucion?: string
-    rutaAsignada?: string
-  }
-
-  descripcionActividad?: {
+    unidad?: string
+    responsableAutorizaNombre?: string
+    supervisorNombre?: string
+    tipoTrabajo?: string
+    lugarArea?: string
     alturaAproximada?: number
-    tipoTrabajoAltura?: string
-    herramientasEquipos?: string[]
-    materialesInvolucrados?: string
+    fecha?: string
+    horaInicio?: string
+    horaTermino?: string
+    tiempoEstimadoMin?: number
   }
 
-  evaluacionRiesgos?: {
-    riesgoCaida?: boolean
-    riesgoElectrico?: boolean
-    riesgoSustanciasPeligrosas?: boolean
-    riesgoCondicionesClimaticas?: boolean
-    otrosRiesgos?: string
+  personalCompetente?: Array<{
+    numeroEmpleado?: string
+    nombre?: string
+    tipo?: string
+    cuentaConDC3?: boolean
+    evaluacionMedicaApto?: boolean
+    anexaResultadoMedico?: boolean
+    firmaEmpleado?: string
+  }>
+
+  equipoUtilizar?: {
+    andamio?: boolean
+    elevadorElectricoPersonal?: boolean
+    escaleraTijera?: boolean
+    escaleraExtension?: boolean
+    escaleraFija?: boolean
+    equipoElevacionArticulado?: boolean
+    escaleraMarina?: boolean
+    pasoGatoTecho?: boolean
+    otros?: string
+  }
+
+  proteccionCaidas?: {
+    arnes?: boolean
+    lineaVida?: boolean
+    limitadorCaida?: boolean
+    anclaje?: boolean
+    otros?: string
   }
 
   epp?: {
+    zapatoSeguridad?: boolean
     guantesSeguridad?: boolean
-    calzadoAntiderrapante?: boolean
-    ropaAlgodon?: boolean
+    guantesPiel?: boolean
+    cascoBarbiquejo?: boolean
+    lentesSeguridad?: boolean
+    taponesAuditivos?: boolean
+    conchasAuditivas?: boolean
+    chalecoReflectivo?: boolean
+    otros?: string
   }
 
-  condicionesPrevias?: {
-    inspeccionAreaRealizada?: boolean
-    senalizacionColocada?: boolean
-    supervisionAsignada?: boolean
-    planRescateDefinido?: boolean
-    botiquinYBrigadaDisponibles?: boolean
+  condicionesClimaticas?: {
+    lluvia?: boolean
+    viento?: boolean
+    temperaturaExtrema?: boolean
+    hieloGranizo?: boolean
+    nieve?: boolean
+    otros?: string
+    bloqueoAutomatico?: boolean
   }
 
-  comentariosAutorizacion?: string
+  requisitosAntesIniciar?: {
+    areaDelimitada?: boolean
+    serviciosDeshabilitados?: boolean
+    controlEnergiasPeligrosas?: boolean
+    inspeccionEquiposUtilizar?: boolean
+    inspeccionArnes?: boolean
+    inspeccionLineaVida?: boolean
+    inspeccionEpp?: boolean
+    sistemaComunicacion?: boolean
+  }
+
+  requisitosAlTerminar?: {
+    barrerasRetiradas?: boolean
+    supervisorNotificado?: boolean
+    personalAreaNotificado?: boolean
+    areaLimpiaOrdenada?: boolean
+    herramientasRecogidas?: boolean
+    materialesRetirados?: boolean
+    aprobadorCierreNombre?: string
+    aprobadorCierreFirma?: string
+    aprobadorCierreFecha?: string
+  }
+
+  observacionesComentarios?: string
+
+  aprobaciones?: {
+    aprobadorAreaNombre?: string
+    empleadoTurnoFirma?: string
+    supervisorAreaFirma?: string
+    contratistaFirma?: string
+  }
+
+  evidencia?: {
+    totalFotos?: number
+    fotos?: Array<{
+      nombre?: string
+      ruta?: string
+      url?: string
+      tipo?: string
+      size?: number
+    }>
+  }
+
+  notificacionEnviada?: boolean
+  fechaAutorizacion?: Timestamp | null
+  autorizadoPor?: string | null
 }
 
 const FILTERS: { key: EstatusFiltro; label: string }[] = [
@@ -75,25 +162,6 @@ const FILTERS: { key: EstatusFiltro; label: string }[] = [
   { key: 'autorizado', label: 'Autorizados' },
   { key: 'rechazado', label: 'Rechazados' },
 ]
-
-function formatFecha(fechaTrabajo?: string, fechaSolicitud?: Timestamp | null) {
-  if (fechaTrabajo) {
-    const [year, month, day] = fechaTrabajo.split('-')
-    if (year && month && day) {
-      return `${day} ${getMonthName(Number(month))} ${year}`
-    }
-  }
-
-  if (fechaSolicitud?.toDate) {
-    const date = fechaSolicitud.toDate()
-    const day = String(date.getDate()).padStart(2, '0')
-    const month = getMonthName(date.getMonth() + 1)
-    const year = date.getFullYear()
-    return `${day} ${month} ${year}`
-  }
-
-  return 'Sin fecha'
-}
 
 function getMonthName(month: number) {
   const months = [
@@ -111,6 +179,28 @@ function getMonthName(month: number) {
     'DIC',
   ]
   return months[month - 1] || '---'
+}
+
+function formatFecha(
+  fecha?: string,
+  fechaSolicitud?: Timestamp | null
+) {
+  if (fecha) {
+    const [year, month, day] = fecha.split('-')
+    if (year && month && day) {
+      return `${day} ${getMonthName(Number(month))} ${year}`
+    }
+  }
+
+  if (fechaSolicitud?.toDate) {
+    const date = fechaSolicitud.toDate()
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = getMonthName(date.getMonth() + 1)
+    const year = date.getFullYear()
+    return `${day} ${month} ${year}`
+  }
+
+  return 'Sin fecha'
 }
 
 function normalizeStatus(estatus?: string): EstatusFiltro {
@@ -164,7 +254,7 @@ export default function MisServicios() {
 
     const q = query(
       collection(db, 'solicitudes_altura'),
-      where('operadorId', '==', user.uid),
+      where('operador.uid', '==', user.uid),
       orderBy('fechaSolicitud', 'desc')
     )
 
@@ -182,9 +272,9 @@ export default function MisServicios() {
         setServices(items)
         setLoading(false)
       },
-      (err: any) => {
+      (err) => {
         console.error('Error fetching services:', err)
-        setError('No se pudieron cargar los servicios.')
+        setError('No se pudieron cargar las solicitudes.')
         setLoading(false)
       }
     )
@@ -231,8 +321,10 @@ export default function MisServicios() {
     <>
       <section className="mis-servicios-page">
         <header className="mis-servicios-page__header">
-          <span className="mis-servicios-page__eyebrow">Mis servicios</span>
-          <h1>Trabajos recientes</h1>
+          <span className="mis-servicios-page__eyebrow">
+            Mis solicitudes
+          </span>
+          <h1>Permisos de trabajo en alturas</h1>
           <p>
             Aquí se muestran únicamente las solicitudes del operador actual.
           </p>
@@ -253,7 +345,7 @@ export default function MisServicios() {
         </div>
 
         {loading && (
-          <div className="mis-servicios-state">Cargando servicios...</div>
+          <div className="mis-servicios-state">Cargando solicitudes...</div>
         )}
 
         {!loading && error && (
@@ -265,8 +357,8 @@ export default function MisServicios() {
         {!loading && !error && filteredServices.length === 0 && (
           <div className="mis-servicios-empty">
             <BriefcaseBusiness size={20} />
-            <strong>No hay servicios para mostrar</strong>
-            <p>No se encontraron solicitudes en este filtro.</p>
+            <strong>No hay solicitudes para mostrar</strong>
+            <p>No se encontraron registros en este filtro.</p>
           </div>
         )}
 
@@ -291,7 +383,10 @@ export default function MisServicios() {
                 >
                   <div className="service-card__top">
                     <span className="service-card__date">
-                      {formatFecha(service.fechaTrabajo, service.fechaSolicitud)}
+                      {formatFecha(
+                        service.datosGenerales?.fecha,
+                        service.fechaSolicitud
+                      )}
                     </span>
 
                     <div className={`service-card__icon service-card__icon--${status}`}>
@@ -300,28 +395,34 @@ export default function MisServicios() {
                   </div>
 
                   <h3>
-                    {service.datosGenerales?.nombreTrabajo || 'Trabajo sin nombre'}
+                    {service.datosGenerales?.tipoTrabajo ||
+                      'Permiso de trabajo en alturas'}
                   </h3>
 
                   <p className="service-card__address">
                     <MapPin size={14} />
                     <span>
-                      {service.datosGenerales?.lugarEjecucion || 'Sin dirección'}
+                      {service.datosGenerales?.lugarArea || 'Sin ubicación'}
                     </span>
                   </p>
 
                   <div className="service-card__meta">
                     <span>
                       <Ruler size={14} />
-                      {service.descripcionActividad?.alturaAproximada ?? 0}m Altura
+                      {service.datosGenerales?.alturaAproximada ?? 0} m
                     </span>
 
-                    {service.horaInicio && (
+                    {service.datosGenerales?.horaInicio && (
                       <span>
                         <Clock3 size={14} />
-                        {service.horaInicio}
+                        {service.datosGenerales.horaInicio}
                       </span>
                     )}
+
+                    <span>
+                      <UserRound size={14} />
+                      {service.operador?.numeroEmpleado || 'Sin número'}
+                    </span>
                   </div>
 
                   <div className="service-card__footer">

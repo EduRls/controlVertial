@@ -1,60 +1,16 @@
 import {
-  AlertTriangle,
+  CheckSquare,
   Clock3,
   FileText,
+  HardHat,
   MapPin,
   ShieldCheck,
-  Shirt,
   X,
 } from 'lucide-react'
 import './ServicioDetalleModal.css'
+import type { SolicitudAltura } from '../MisServicios'
 
 type EstatusFiltro = 'todos' | 'pendiente' | 'autorizado' | 'rechazado'
-
-type SolicitudAltura = {
-  id: string
-  folio?: string
-  fechaTrabajo?: string
-  horaInicio?: string | null
-  estatus?: string
-
-  datosGenerales?: {
-    nombreTrabajo?: string
-    lugarEjecucion?: string
-    rutaAsignada?: string
-  }
-
-  descripcionActividad?: {
-    alturaAproximada?: number
-    tipoTrabajoAltura?: string
-    herramientasEquipos?: string[]
-    materialesInvolucrados?: string
-  }
-
-  evaluacionRiesgos?: {
-    riesgoCaida?: boolean
-    riesgoElectrico?: boolean
-    riesgoSustanciasPeligrosas?: boolean
-    riesgoCondicionesClimaticas?: boolean
-    otrosRiesgos?: string
-  }
-
-  epp?: {
-    guantesSeguridad?: boolean
-    calzadoAntiderrapante?: boolean
-    ropaAlgodon?: boolean
-  }
-
-  condicionesPrevias?: {
-    inspeccionAreaRealizada?: boolean
-    senalizacionColocada?: boolean
-    supervisionAsignada?: boolean
-    planRescateDefinido?: boolean
-    botiquinYBrigadaDisponibles?: boolean
-  }
-
-  comentariosAutorizacion?: string
-}
 
 type Props = {
   open: boolean
@@ -68,6 +24,17 @@ function renderBoolean(value?: boolean) {
   return value ? 'Sí' : 'No'
 }
 
+function getSelectedItems(
+  source: Record<string, unknown> | undefined,
+  labels: Record<string, string>
+) {
+  if (!source) return []
+
+  return Object.entries(labels)
+    .filter(([key]) => source[key] === true)
+    .map(([, label]) => label)
+}
+
 export default function ServicioDetalleModal({
   open,
   service,
@@ -77,6 +44,71 @@ export default function ServicioDetalleModal({
 }: Props) {
   if (!open || !service) return null
 
+  const equipoLabels = {
+    andamio: 'Andamio',
+    elevadorElectricoPersonal: 'Elevador eléctrico personal',
+    escaleraTijera: 'Escalera tijera',
+    escaleraExtension: 'Escalera extensión',
+    escaleraFija: 'Escalera fija',
+    equipoElevacionArticulado: 'Equipo elevación articulado',
+    escaleraMarina: 'Escalera marina',
+    pasoGatoTecho: 'Paso de gato en techo',
+  }
+
+  const proteccionLabels = {
+    arnes: 'Arnés',
+    lineaVida: 'Línea de vida',
+    limitadorCaida: 'Limitador de caída',
+    anclaje: 'Anclaje',
+  }
+
+  const eppLabels = {
+    zapatoSeguridad: 'Zapato de seguridad',
+    guantesSeguridad: 'Guantes de seguridad',
+    guantesPiel: 'Guantes de piel',
+    cascoBarbiquejo: 'Casco con barbiquejo',
+    lentesSeguridad: 'Lentes de seguridad',
+    taponesAuditivos: 'Tapones auditivos',
+    conchasAuditivas: 'Conchas auditivas',
+    chalecoReflectivo: 'Chaleco reflectivo',
+  }
+
+  const climaLabels = {
+    lluvia: 'Lluvia',
+    viento: 'Viento',
+    temperaturaExtrema: 'Temperatura extrema',
+    hieloGranizo: 'Hielo / granizo',
+    nieve: 'Nieve',
+  }
+
+  const requisitosLabels = {
+    areaDelimitada: 'Área delimitada',
+    serviciosDeshabilitados: 'Servicios deshabilitados',
+    controlEnergiasPeligrosas: 'Control de energías peligrosas',
+    inspeccionEquiposUtilizar: 'Inspección de equipos',
+    inspeccionArnes: 'Inspección de arnés',
+    inspeccionLineaVida: 'Inspección de línea de vida',
+    inspeccionEpp: 'Inspección de EPP',
+    sistemaComunicacion: 'Sistema de comunicación',
+  }
+
+  const equipoSeleccionado = getSelectedItems(service.equipoUtilizar, equipoLabels)
+  const proteccionSeleccionada = getSelectedItems(
+    service.proteccionCaidas,
+    proteccionLabels
+  )
+  const eppSeleccionado = getSelectedItems(service.epp, eppLabels)
+  const climaSeleccionado = getSelectedItems(
+    service.condicionesClimaticas,
+    climaLabels
+  )
+  const requisitosSeleccionados = getSelectedItems(
+    service.requisitosAntesIniciar,
+    requisitosLabels
+  )
+
+  const personal = service.personalCompetente?.[0]
+
   return (
     <div className="servicio-modal__overlay" onClick={onClose}>
       <div
@@ -85,9 +117,11 @@ export default function ServicioDetalleModal({
       >
         <div className="servicio-modal__header">
           <div>
-            <span className="servicio-modal__eyebrow">Detalle del servicio</span>
+            <span className="servicio-modal__eyebrow">
+              Detalle de la solicitud
+            </span>
             <h2>
-              {service.datosGenerales?.nombreTrabajo || 'Trabajo sin nombre'}
+              {service.datosGenerales?.tipoTrabajo || 'Permiso de trabajo en alturas'}
             </h2>
           </div>
 
@@ -119,8 +153,8 @@ export default function ServicioDetalleModal({
               <div className="servicio-modal__item">
                 <MapPin size={16} />
                 <div>
-                  <strong>Ubicación</strong>
-                  <span>{service.datosGenerales?.lugarEjecucion || 'Sin dirección'}</span>
+                  <strong>Lugar o área</strong>
+                  <span>{service.datosGenerales?.lugarArea || 'Sin ubicación'}</span>
                 </div>
               </div>
 
@@ -129,8 +163,10 @@ export default function ServicioDetalleModal({
                 <div>
                   <strong>Fecha y hora</strong>
                   <span>
-                    {service.fechaTrabajo || 'Sin fecha'}
-                    {service.horaInicio ? ` · ${service.horaInicio}` : ''}
+                    {service.datosGenerales?.fecha || 'Sin fecha'}
+                    {service.datosGenerales?.horaInicio
+                      ? ` · ${service.datosGenerales.horaInicio}`
+                      : ''}
                   </span>
                 </div>
               </div>
@@ -138,119 +174,182 @@ export default function ServicioDetalleModal({
               <div className="servicio-modal__item">
                 <FileText size={16} />
                 <div>
-                  <strong>Ruta asignada</strong>
-                  <span>{service.datosGenerales?.rutaAsignada || 'Sin ruta'}</span>
+                  <strong>Unidad</strong>
+                  <span>{service.datosGenerales?.unidad || 'Sin unidad'}</span>
+                </div>
+              </div>
+
+              <div className="servicio-modal__item">
+                <HardHat size={16} />
+                <div>
+                  <strong>Altura aproximada</strong>
+                  <span>{service.datosGenerales?.alturaAproximada ?? 0} m</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="servicio-modal__section">
-            <h3>Actividad</h3>
+            <h3>Operador y personal autorizado</h3>
 
             <div className="servicio-modal__grid">
               <div className="servicio-modal__infoBox">
-                <strong>Tipo de trabajo</strong>
-                <span>
-                  {service.descripcionActividad?.tipoTrabajoAltura || 'No especificado'}
-                </span>
+                <strong>Operador</strong>
+                <span>{service.operador?.nombre || 'No especificado'}</span>
               </div>
 
               <div className="servicio-modal__infoBox">
-                <strong>Altura aproximada</strong>
-                <span>
-                  {service.descripcionActividad?.alturaAproximada ?? 0} m
-                </span>
+                <strong># Empleado</strong>
+                <span>{service.operador?.numeroEmpleado || 'Sin número'}</span>
               </div>
 
-              <div className="servicio-modal__infoBox servicio-modal__infoBox--full">
-                <strong>Material involucrado</strong>
-                <span>
-                  {service.descripcionActividad?.materialesInvolucrados || 'No especificado'}
-                </span>
+              <div className="servicio-modal__infoBox">
+                <strong>Tipo</strong>
+                <span>{personal?.tipo || 'No especificado'}</span>
               </div>
 
-              <div className="servicio-modal__infoBox servicio-modal__infoBox--full">
-                <strong>Herramientas / equipos</strong>
-                <span>
-                  {service.descripcionActividad?.herramientasEquipos?.length
-                    ? service.descripcionActividad.herramientasEquipos.join(', ')
-                    : 'No registrados'}
-                </span>
+              <div className="servicio-modal__infoBox">
+                <strong>Cuenta con DC3</strong>
+                <span>{renderBoolean(personal?.cuentaConDC3)}</span>
+              </div>
+
+              <div className="servicio-modal__infoBox">
+                <strong>Evaluación médica apto</strong>
+                <span>{renderBoolean(personal?.evaluacionMedicaApto)}</span>
+              </div>
+
+              <div className="servicio-modal__infoBox">
+                <strong>Anexa resultado médico</strong>
+                <span>{renderBoolean(personal?.anexaResultadoMedico)}</span>
               </div>
             </div>
           </div>
 
           <div className="servicio-modal__section">
             <h3>
-              <AlertTriangle size={16} />
-              Evaluación de riesgos
+              <CheckSquare size={16} />
+              Equipo a utilizar
             </h3>
 
             <div className="servicio-modal__chips">
-              <span className="servicio-chip">
-                Riesgo de caída: {renderBoolean(service.evaluacionRiesgos?.riesgoCaida)}
-              </span>
-              <span className="servicio-chip">
-                Riesgo eléctrico: {renderBoolean(service.evaluacionRiesgos?.riesgoElectrico)}
-              </span>
-              <span className="servicio-chip">
-                Sustancias peligrosas: {renderBoolean(service.evaluacionRiesgos?.riesgoSustanciasPeligrosas)}
-              </span>
-              <span className="servicio-chip">
-                Riesgo climático: {renderBoolean(service.evaluacionRiesgos?.riesgoCondicionesClimaticas)}
-              </span>
-            </div>
+              {equipoSeleccionado.length > 0 ? (
+                equipoSeleccionado.map((item) => (
+                  <span className="servicio-chip" key={item}>
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <span className="servicio-chip">Sin equipo marcado</span>
+              )}
 
-            <div className="servicio-modal__note">
-              <strong>Otros riesgos</strong>
-              <p>{service.evaluacionRiesgos?.otrosRiesgos || 'Sin observaciones'}</p>
-            </div>
-          </div>
-
-          <div className="servicio-modal__section">
-            <h3>
-              <Shirt size={16} />
-              EPP
-            </h3>
-
-            <div className="servicio-modal__chips">
-              <span className="servicio-chip">
-                Guantes: {renderBoolean(service.epp?.guantesSeguridad)}
-              </span>
-              <span className="servicio-chip">
-                Calzado antiderrapante: {renderBoolean(service.epp?.calzadoAntiderrapante)}
-              </span>
-              <span className="servicio-chip">
-                Ropa de algodón: {renderBoolean(service.epp?.ropaAlgodon)}
-              </span>
+              {service.equipoUtilizar?.otros && (
+                <span className="servicio-chip">
+                  Otros: {service.equipoUtilizar.otros}
+                </span>
+              )}
             </div>
           </div>
 
           <div className="servicio-modal__section">
             <h3>
               <ShieldCheck size={16} />
-              Condiciones previas
+              Protección contra caídas
             </h3>
 
             <div className="servicio-modal__chips">
-              <span className="servicio-chip">
-                Inspección realizada: {renderBoolean(service.condicionesPrevias?.inspeccionAreaRealizada)}
-              </span>
-              <span className="servicio-chip">
-                Señalización colocada: {renderBoolean(service.condicionesPrevias?.senalizacionColocada)}
-              </span>
-              <span className="servicio-chip">
-                Supervisión asignada: {renderBoolean(service.condicionesPrevias?.supervisionAsignada)}
-              </span>
-              <span className="servicio-chip">
-                Plan de rescate: {renderBoolean(service.condicionesPrevias?.planRescateDefinido)}
-              </span>
-              <span className="servicio-chip">
-                Botiquín y brigada: {renderBoolean(service.condicionesPrevias?.botiquinYBrigadaDisponibles)}
-              </span>
+              {proteccionSeleccionada.length > 0 ? (
+                proteccionSeleccionada.map((item) => (
+                  <span className="servicio-chip" key={item}>
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <span className="servicio-chip">Sin protección marcada</span>
+              )}
+
+              {service.proteccionCaidas?.otros && (
+                <span className="servicio-chip">
+                  Otros: {service.proteccionCaidas.otros}
+                </span>
+              )}
             </div>
           </div>
+
+          <div className="servicio-modal__section">
+            <h3>EPP</h3>
+
+            <div className="servicio-modal__chips">
+              {eppSeleccionado.length > 0 ? (
+                eppSeleccionado.map((item) => (
+                  <span className="servicio-chip" key={item}>
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <span className="servicio-chip">Sin EPP marcado</span>
+              )}
+
+              {service.epp?.otros && (
+                <span className="servicio-chip">Otros: {service.epp.otros}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="servicio-modal__section">
+            <h3>Condiciones climatológicas</h3>
+
+            <div className="servicio-modal__chips">
+              {climaSeleccionado.length > 0 ? (
+                climaSeleccionado.map((item) => (
+                  <span className="servicio-chip" key={item}>
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <span className="servicio-chip">Sin condiciones bloqueantes</span>
+              )}
+
+              {service.condicionesClimaticas?.otros && (
+                <span className="servicio-chip">
+                  Otros: {service.condicionesClimaticas.otros}
+                </span>
+              )}
+            </div>
+
+            <div className="servicio-modal__note">
+              <strong>Bloqueo automático</strong>
+              <p>
+                {service.condicionesClimaticas?.bloqueoAutomatico
+                  ? 'Sí, esta solicitud quedó bloqueada por condiciones climatológicas.'
+                  : 'No'}
+              </p>
+            </div>
+          </div>
+
+          <div className="servicio-modal__section">
+            <h3>Requisitos antes de iniciar</h3>
+
+            <div className="servicio-modal__chips">
+              {requisitosSeleccionados.length > 0 ? (
+                requisitosSeleccionados.map((item) => (
+                  <span className="servicio-chip" key={item}>
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <span className="servicio-chip">Sin requisitos marcados</span>
+              )}
+            </div>
+          </div>
+
+          {service.observacionesComentarios && (
+            <div className="servicio-modal__section">
+              <h3>Observaciones / comentarios</h3>
+              <div className="servicio-modal__note">
+                <p>{service.observacionesComentarios}</p>
+              </div>
+            </div>
+          )}
 
           {service.comentariosAutorizacion && (
             <div className="servicio-modal__section">
@@ -260,6 +359,34 @@ export default function ServicioDetalleModal({
               </div>
             </div>
           )}
+
+          <div className="servicio-modal__section">
+            <h3>Evidencia</h3>
+            <div className="servicio-modal__note">
+              <p>
+                Total de fotos: {service.evidencia?.totalFotos ?? 0}
+              </p>
+            </div>
+
+            {service.evidencia?.fotos?.length ? (
+              <div className="servicio-modal__gallery">
+                {service.evidencia.fotos.map((foto, index) => (
+                  <a
+                    key={`${foto.url}-${index}`}
+                    href={foto.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="servicio-modal__photo"
+                  >
+                    <img
+                      src={foto.url}
+                      alt={foto.nombre || `Evidencia ${index + 1}`}
+                    />
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

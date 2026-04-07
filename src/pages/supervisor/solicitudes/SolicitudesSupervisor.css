@@ -309,3 +309,42 @@
     font-size: 15px;
   }
 }
+
+.solicitudes-supervisor__filterCount {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.solicitud-card__location {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.solicitud-card__priority {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.solicitud-card__priority.risk-high {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.solicitud-card__priority.risk-medium {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.solicitud-card__priority.risk-low {
+  background: #dcfce7;
+  color: #16a34a;
+}

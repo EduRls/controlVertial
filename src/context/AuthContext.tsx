@@ -24,6 +24,22 @@ type LoginData = {
 
 export type UserRole = 'operador' | 'supervisor' | 'administrador'
 
+export type EmergencyContact = {
+  nombre: string
+  parentesco: string
+  telefono: string
+}
+
+export type IdentificationCard = {
+  nombre: string
+  numeroEmpleado: string
+  cargo: string
+  area: string
+  edad: number | null
+  genero: string
+  telefono: string
+}
+
 export type AppUserProfile = {
   id: string
   nombre: string
@@ -32,6 +48,10 @@ export type AppUserProfile = {
   fechaAlta: string
   correo: string
   rol: UserRole | ''
+  activo: boolean
+
+  fichaIdentificacion: IdentificationCard
+  contactoEmergencia: EmergencyContact
 }
 
 type AuthContextType = {
@@ -119,6 +139,27 @@ async function getUserProfileByUid(uid: string): Promise<AppUserProfile | null> 
     fechaAlta: formatFirestoreDate(data.fechaAlta),
     correo: data.correo ?? '',
     rol: data.rol ?? '',
+    activo: data.activo ?? false,
+
+    fichaIdentificacion: {
+      nombre: data.fichaIdentificacion?.nombre ?? data.nombre ?? '',
+      numeroEmpleado: data.fichaIdentificacion?.numeroEmpleado ?? '',
+      cargo: data.fichaIdentificacion?.cargo ?? '',
+      area: data.fichaIdentificacion?.area ?? '',
+      edad:
+        typeof data.fichaIdentificacion?.edad === 'number'
+          ? data.fichaIdentificacion.edad
+          : null,
+      genero: data.fichaIdentificacion?.genero ?? '',
+      telefono:
+        data.fichaIdentificacion?.telefono ?? data.telefono ?? '',
+    },
+
+    contactoEmergencia: {
+      nombre: data.contactoEmergencia?.nombre ?? '',
+      parentesco: data.contactoEmergencia?.parentesco ?? '',
+      telefono: data.contactoEmergencia?.telefono ?? '',
+    },
   }
 }
 

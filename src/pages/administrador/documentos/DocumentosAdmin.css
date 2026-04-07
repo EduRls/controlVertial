@@ -1,6 +1,386 @@
-.admin-page {
+.documentos-admin-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 4px 24px;
+  background: #f7f9fc;
+  min-height: calc(100vh - 80px);
+}
+
+.docs-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.docs-topbar__eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7c8aa5;
+}
+
+.docs-topbar h1 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1;
+  color: #1f2a37;
+}
+
+.docs-topbar span {
+  display: inline-block;
+  margin-top: 8px;
+  color: #7b8794;
+  font-size: 14px;
+}
+
+.docs-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 12px;
+  min-width: 360px;
+}
+
+.docs-metric-card {
   background: #ffffff;
+  border: 1px solid #ebeff5;
   border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(58, 58, 58, 0.05);
+  padding: 18px 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+  text-align: center;
+}
+
+.docs-metric-card strong {
+  display: block;
+  font-size: 28px;
+  line-height: 1;
+  color: #3f6fb6;
+}
+
+.docs-metric-card span {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8a94a6;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.docs-panel {
+  background: #ffffff;
+  border-radius: 28px;
+  border: 1px solid #ecf0f5;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.docs-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.docs-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.docs-tabs button {
+  border: none;
+  background: #f3f6fa;
+  color: #708198;
+  border-radius: 999px;
+  padding: 11px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.docs-tabs button:hover {
+  background: #e9eef7;
+}
+
+.docs-tabs button.active {
+  background: #4f7fbf;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(79, 127, 191, 0.25);
+}
+
+.docs-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 320px;
+  background: #f8fafc;
+  border: 1px solid #e7edf5;
+  border-radius: 14px;
+  padding: 0 14px;
+  height: 46px;
+  color: #90a0b7;
+}
+
+.docs-search input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: #334155;
+  font-size: 14px;
+}
+
+.docs-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.docs-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+
+.docs-table thead th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #95a1b3;
+  font-weight: 800;
+  padding: 18px 24px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.docs-table tbody td {
+  padding: 18px 24px;
+  border-bottom: 1px solid #f1f4f8;
+  vertical-align: middle;
+}
+
+.docs-table tbody tr {
+  transition: background 0.18s ease;
+}
+
+.docs-table tbody tr:hover {
+  background: #fafcff;
+}
+
+.doc-main-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.doc-main-cell__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #eef4ff;
+  color: #4f7fbf;
+  flex-shrink: 0;
+}
+
+.doc-main-cell__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.doc-main-cell__content strong {
+  color: #243041;
+  font-size: 14px;
+}
+
+.doc-main-cell__content span {
+  color: #8a94a6;
+  font-size: 12px;
+}
+
+.doc-type-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #65748b;
+  background: #f1f5f9;
+}
+
+.doc-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.doc-user-cell__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #4f7fbf, #7da5dd);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.doc-user-cell__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.doc-user-cell__text strong {
+  font-size: 14px;
+  color: #223042;
+}
+
+.doc-user-cell__text span {
+  font-size: 12px;
+  color: #8a94a6;
+}
+
+.doc-date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.doc-date-cell strong {
+  font-size: 13px;
+  color: #243041;
+}
+
+.doc-date-cell span {
+  font-size: 12px;
+  color: #8a94a6;
+}
+
+.doc-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.doc-status-chip.autorizado {
+  background: #e8f8ef;
+  color: #1f8a57;
+}
+
+.doc-status-chip.pendiente {
+  background: #eef2f7;
+  color: #66748a;
+}
+
+.doc-status-chip.bloqueado {
+  background: #fff1f1;
+  color: #d15252;
+}
+
+.doc-action-btn {
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: #f5f8fc;
+  color: #4f7fbf;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.doc-action-btn:hover {
+  background: #e9f0fb;
+}
+
+.docs-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px 22px;
+  color: #8a94a6;
+  font-size: 13px;
+}
+
+.docs-empty {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #96a0b2;
+}
+
+.docs-empty strong {
+  color: #586579;
+}
+
+@media (max-width: 1180px) {
+  .docs-topbar {
+    flex-direction: column;
+  }
+
+  .docs-metrics {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .docs-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .docs-search {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .documentos-admin-v2 {
+    gap: 18px;
+  }
+
+  .docs-topbar h1 {
+    font-size: 30px;
+  }
+
+  .docs-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-panel {
+    border-radius: 20px;
+  }
+
+  .docs-toolbar {
+    padding: 18px;
+  }
+
+  .docs-table thead th,
+  .docs-table tbody td {
+    padding: 14px 16px;
+  }
+
+  .docs-footer {
+    padding: 16px 18px 18px;
+  }
 }

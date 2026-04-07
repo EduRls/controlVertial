@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  CalendarDays,
-  Eye,
-  MoveVertical,
-} from 'lucide-react'
-import {
   collection,
   onSnapshot,
   orderBy,
   query,
   Timestamp,
 } from 'firebase/firestore'
+import {
+  CalendarDays,
+  Clock3,
+  Eye,
+  MoveVertical,
+  ShieldAlert,
+  UserRound,
+} from 'lucide-react'
+
 import { db } from '../../../firebase/firebase'
 import { useAuth } from '../../../context/AuthContext'
 import SolicitudDetalleModal from './components/SolicitudDetalleModal'
@@ -22,48 +26,99 @@ type SolicitudAltura = {
   id: string
   folio?: string
   fechaSolicitud?: Timestamp | null
-  fechaTrabajo?: string
-  horaInicio?: string | null
   estatus?: string
-  operadorNombre?: string
-  operadorId?: string
+  autorizacion?: boolean
   comentariosAutorizacion?: string
-  autorizadoPor?: string | null
+
+  operador?: {
+    uid?: string
+    nombre?: string
+    numeroEmpleado?: string
+    telefono?: string
+    correo?: string
+    rol?: string
+    rutaAsignada?: string
+    area?: string
+    cargo?: string
+  }
 
   datosGenerales?: {
-    nombreTrabajo?: string
-    lugarEjecucion?: string
-    rutaAsignada?: string
-  }
-
-  descripcionActividad?: {
+    unidad?: string
+    responsableAutorizaNombre?: string
+    supervisorNombre?: string
+    tipoTrabajo?: string
+    lugarArea?: string
     alturaAproximada?: number
-    tipoTrabajoAltura?: string
-    herramientasEquipos?: string[]
-    materialesInvolucrados?: string
+    fecha?: string
+    horaInicio?: string
+    horaTermino?: string
+    tiempoEstimadoMin?: number
   }
 
-  evaluacionRiesgos?: {
-    riesgoCaida?: boolean
-    riesgoElectrico?: boolean
-    riesgoSustanciasPeligrosas?: boolean
-    riesgoCondicionesClimaticas?: boolean
-    otrosRiesgos?: string
+  personalCompetente?: Array<{
+    numeroEmpleado?: string
+    nombre?: string
+    tipo?: string
+    cuentaConDC3?: boolean
+    evaluacionMedicaApto?: boolean
+    anexaResultadoMedico?: boolean
+    firmaEmpleado?: string
+  }>
+
+  equipoUtilizar?: {
+    andamio?: boolean
+    elevadorElectricoPersonal?: boolean
+    escaleraTijera?: boolean
+    escaleraExtension?: boolean
+    escaleraFija?: boolean
+    equipoElevacionArticulado?: boolean
+    escaleraMarina?: boolean
+    pasoGatoTecho?: boolean
+    otros?: string
+  }
+
+  proteccionCaidas?: {
+    arnes?: boolean
+    lineaVida?: boolean
+    limitadorCaida?: boolean
+    anclaje?: boolean
+    otros?: string
   }
 
   epp?: {
+    zapatoSeguridad?: boolean
     guantesSeguridad?: boolean
-    calzadoAntiderrapante?: boolean
-    ropaAlgodon?: boolean
+    guantesPiel?: boolean
+    cascoBarbiquejo?: boolean
+    lentesSeguridad?: boolean
+    taponesAuditivos?: boolean
+    conchasAuditivas?: boolean
+    chalecoReflectivo?: boolean
+    otros?: string
   }
 
-  condicionesPrevias?: {
-    inspeccionAreaRealizada?: boolean
-    senalizacionColocada?: boolean
-    supervisionAsignada?: boolean
-    planRescateDefinido?: boolean
-    botiquinYBrigadaDisponibles?: boolean
+  condicionesClimaticas?: {
+    lluvia?: boolean
+    viento?: boolean
+    temperaturaExtrema?: boolean
+    hieloGranizo?: boolean
+    nieve?: boolean
+    otros?: string
+    bloqueoAutomatico?: boolean
   }
+
+  requisitosAntesIniciar?: {
+    areaDelimitada?: boolean
+    serviciosDeshabilitados?: boolean
+    controlEnergiasPeligrosas?: boolean
+    inspeccionEquiposUtilizar?: boolean
+    inspeccionArnes?: boolean
+    inspeccionLineaVida?: boolean
+    inspeccionEpp?: boolean
+    sistemaComunicacion?: boolean
+  }
+
+  observacionesComentarios?: string
 
   evidencia?: {
     totalFotos?: number
@@ -86,7 +141,11 @@ const FILTERS: { key: FiltroSolicitud; label: string }[] = [
 function normalizeStatus(estatus?: string): FiltroSolicitud {
   const value = (estatus || '').toLowerCase().trim()
 
-  if (value === 'aprobada' || value === 'autorizado' || value === 'autorizada') {
+  if (
+    value === 'aprobada' ||
+    value === 'autorizado' ||
+    value === 'autorizada'
+  ) {
     return 'aprobada'
   }
 
@@ -110,9 +169,28 @@ function getInitials(name?: string) {
   return parts.map((part) => part.charAt(0).toUpperCase()).join('')
 }
 
-function formatFecha(fechaTrabajo?: string, fechaSolicitud?: Timestamp | null) {
-  if (fechaTrabajo) {
-    const [year, month, day] = fechaTrabajo.split('-')
+function getMonthName(month: number) {
+  const months = [
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
+  ]
+
+  return months[month - 1] || '---'
+}
+
+function formatFecha(fecha?: string, fechaSolicitud?: Timestamp | null) {
+  if (fecha) {
+    const [year, month, day] = fecha.split('-')
     if (year && month && day) {
       return `${day} ${getMonthName(Number(month))}, ${year}`
     }
@@ -129,23 +207,38 @@ function formatFecha(fechaTrabajo?: string, fechaSolicitud?: Timestamp | null) {
   return 'Sin fecha'
 }
 
-function getMonthName(month: number) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Ago',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dic',
-  ]
+function getRiskSummary(item: SolicitudAltura) {
+  const clima = item.condicionesClimaticas
+  const personal = item.personalCompetente?.[0]
 
-  return months[month - 1] || '---'
+  const climaBloqueante =
+    clima?.lluvia ||
+    clima?.viento ||
+    clima?.temperaturaExtrema ||
+    clima?.hieloGranizo ||
+    clima?.nieve
+
+  const sinDc3 = personal?.cuentaConDC3 === false
+  const noApto = personal?.evaluacionMedicaApto === false
+
+  if (climaBloqueante || noApto) {
+    return {
+      label: 'RIESGO ALTO',
+      className: 'risk-high',
+    }
+  }
+
+  if (sinDc3) {
+    return {
+      label: 'RIESGO MEDIO',
+      className: 'risk-medium',
+    }
+  }
+
+  return {
+    label: 'RIESGO CONTROLADO',
+    className: 'risk-low',
+  }
 }
 
 export default function SolicitudesSupervisor() {
@@ -204,7 +297,7 @@ export default function SolicitudesSupervisor() {
       body.style.overflow = ''
     }
   }, [selectedSolicitud])
-  /*
+
   const counts = useMemo(() => {
     return {
       pendiente: solicitudes.filter(
@@ -217,7 +310,7 @@ export default function SolicitudesSupervisor() {
         (item) => normalizeStatus(item.estatus) === 'rechazada'
       ).length,
     }
-  }, [solicitudes]) */
+  }, [solicitudes])
 
   const filteredSolicitudes = useMemo(() => {
     return solicitudes.filter((item) => normalizeStatus(item.estatus) === filter)
@@ -243,6 +336,9 @@ export default function SolicitudesSupervisor() {
                 onClick={() => setFilter(item.key)}
               >
                 {item.label}
+                <span className="solicitudes-supervisor__filterCount">
+                  {counts[item.key]}
+                </span>
               </button>
             ))}
           </div>
@@ -269,24 +365,30 @@ export default function SolicitudesSupervisor() {
             <div className="solicitudes-supervisor__list">
               {filteredSolicitudes.map((item) => {
                 const status = normalizeStatus(item.estatus)
+                const risk = getRiskSummary(item)
+                const personal = item.personalCompetente?.[0]
+                const totalFotos = item.evidencia?.totalFotos ?? 0
 
                 return (
                   <article key={item.id} className="solicitud-card">
                     <div className="solicitud-card__top">
                       <div className="solicitud-card__identity">
                         <div className="solicitud-card__avatar">
-                          {getInitials(item.operadorNombre)}
+                          {getInitials(item.operador?.nombre)}
                         </div>
 
                         <div className="solicitud-card__identityText">
-                          <h3>{item.operadorNombre || 'Operador sin nombre'}</h3>
+                          <h3>{item.operador?.nombre || 'Operador sin nombre'}</h3>
                           <p>
-                            {item.datosGenerales?.nombreTrabajo || 'Trabajo sin nombre'}
+                            {item.datosGenerales?.tipoTrabajo ||
+                              'Trabajo en alturas'}
                           </p>
                         </div>
                       </div>
 
-                      <span className={`solicitud-card__badge solicitud-card__badge--${status}`}>
+                      <span
+                        className={`solicitud-card__badge solicitud-card__badge--${status}`}
+                      >
                         {getStatusLabel(status)}
                       </span>
                     </div>
@@ -296,41 +398,92 @@ export default function SolicitudesSupervisor() {
                         <MoveVertical size={15} />
                         Altura:{' '}
                         <strong>
-                          {item.descripcionActividad?.alturaAproximada ?? 0} m
+                          {item.datosGenerales?.alturaAproximada ?? 0} m
                         </strong>
                       </span>
 
                       <span>
                         <CalendarDays size={15} />
-                        Fecha: <strong>{formatFecha(item.fechaTrabajo, item.fechaSolicitud)}</strong>
+                        Fecha:{' '}
+                        <strong>
+                          {formatFecha(
+                            item.datosGenerales?.fecha,
+                            item.fechaSolicitud
+                          )}
+                        </strong>
                       </span>
                     </div>
 
+                    <div className="solicitud-card__meta">
+                      <span>
+                        <Clock3 size={15} />
+                        Inicio:{' '}
+                        <strong>{item.datosGenerales?.horaInicio || '--:--'}</strong>
+                      </span>
+
+                      <span>
+                        <UserRound size={15} />
+                        No. empleado:{' '}
+                        <strong>{item.operador?.numeroEmpleado || '---'}</strong>
+                      </span>
+                    </div>
+
+                    <div className="solicitud-card__location">
+                      <strong>Lugar:</strong>{' '}
+                      {item.datosGenerales?.lugarArea || 'Sin ubicación'}
+                    </div>
+
                     <div className="solicitud-card__riskBox">
-                      <span className="solicitud-card__riskTitle">RESUMEN DE RIESGO</span>
+                      <span className="solicitud-card__riskTitle">
+                        RESUMEN DE VALIDACIÓN
+                      </span>
 
                       <p>
-                        Riesgo de caída:{' '}
+                        DC3:{' '}
                         <strong
                           className={
-                            item.evaluacionRiesgos?.riesgoCaida
-                              ? 'risk-yes'
-                              : 'risk-no'
+                            personal?.cuentaConDC3 ? 'risk-no' : 'risk-yes'
                           }
                         >
-                          {item.evaluacionRiesgos?.riesgoCaida ? 'Sí' : 'No'}
-                        </strong>{' '}
-                        | Riesgo eléctrico:{' '}
-                        <strong
-                          className={
-                            item.evaluacionRiesgos?.riesgoElectrico
-                              ? 'risk-yes'
-                              : 'risk-no'
-                          }
-                        >
-                          {item.evaluacionRiesgos?.riesgoElectrico ? 'Sí' : 'No'}
+                          {personal?.cuentaConDC3 ? 'Sí' : 'No'}
                         </strong>
                       </p>
+
+                      <p>
+                        Apto médico:{' '}
+                        <strong
+                          className={
+                            personal?.evaluacionMedicaApto ? 'risk-no' : 'risk-yes'
+                          }
+                        >
+                          {personal?.evaluacionMedicaApto ? 'Sí' : 'No'}
+                        </strong>
+                      </p>
+
+                      <p>
+                        Bloqueo climático:{' '}
+                        <strong
+                          className={
+                            item.condicionesClimaticas?.bloqueoAutomatico
+                              ? 'risk-yes'
+                              : 'risk-no'
+                          }
+                        >
+                          {item.condicionesClimaticas?.bloqueoAutomatico
+                            ? 'Sí'
+                            : 'No'}
+                        </strong>
+                      </p>
+
+                      <p>
+                        Evidencia:{' '}
+                        <strong className="risk-no">{totalFotos} foto(s)</strong>
+                      </p>
+                    </div>
+
+                    <div className={`solicitud-card__priority ${risk.className}`}>
+                      <ShieldAlert size={15} />
+                      <span>{risk.label}</span>
                     </div>
 
                     <div className="solicitud-card__footer">

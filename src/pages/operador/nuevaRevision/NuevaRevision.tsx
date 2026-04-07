@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   addDoc,
   collection,
-  doc,
-  getDoc,
   serverTimestamp,
 } from 'firebase/firestore'
 import {
@@ -13,64 +11,18 @@ import {
 } from 'firebase/storage'
 import {
   AlertTriangle,
-  Camera,
   CheckCircle2,
   ClipboardList,
-  FileText,
   HardHat,
   ImagePlus,
   ShieldCheck,
+  Users,
+  Wrench,
   X,
 } from 'lucide-react'
 import { db, storage } from '../../../firebase/firebase'
 import { useAuth } from '../../../context/AuthContext'
 import './NuevaRevision.css'
-
-type UserProfile = {
-  nombre?: string
-  correo?: string
-  telefono?: string
-  rutaAsignada?: string
-  rol?: string
-}
-
-type FormState = {
-  fechaTrabajo: string
-  horaInicio: string
-
-  datosGenerales: {
-    nombreTrabajo: string
-    lugarEjecucion: string
-    rutaAsignada: string
-  }
-
-  descripcionActividad: {
-    tipoTrabajoAltura: string
-    alturaAproximada: string
-    herramientasEquipos: string[]
-    materialesInvolucrados: string
-  }
-
-  evaluacionRiesgos: {
-    riesgoCaida: boolean
-    riesgoElectrico: boolean
-    riesgoSustanciasPeligrosas: boolean
-    riesgoCondicionesClimaticas: boolean
-    otrosRiesgos: string
-  }
-
-  epp: {
-    guantesSeguridad: boolean
-    calzadoAntiderrapante: boolean
-    ropaAlgodon: boolean
-  }
-
-  condicionesPrevias: {
-    inspeccionAreaRealizada: boolean
-    senalizacionColocada: boolean
-    supervisionAsignada: boolean
-  }
-}
 
 type UploadedPhoto = {
   nombre: string
@@ -80,8 +32,80 @@ type UploadedPhoto = {
   size: number
 }
 
-const TOOL_OPTIONS = ['Escalera', 'Manguera', 'Conexiones', 'Llave']
-const WORK_TYPE_OPTIONS = ['Carga de gas en azotea']
+type FormState = {
+  datosGenerales: {
+    unidad: string
+    tipoTrabajo: string
+    lugarArea: string
+    alturaAproximada: string
+    fecha: string
+    horaInicio: string
+    horaTermino: string
+    tiempoEstimadoMin: string
+  }
+
+  personalCompetente: {
+    tipo: 'Empleado' | 'Contratista'
+    cuentaConDC3: boolean
+    evaluacionMedicaApto: boolean
+    anexaResultadoMedico: boolean
+  }
+
+  equipoUtilizar: {
+    andamio: boolean
+    elevadorElectricoPersonal: boolean
+    escaleraTijera: boolean
+    escaleraExtension: boolean
+    escaleraFija: boolean
+    equipoElevacionArticulado: boolean
+    escaleraMarina: boolean
+    pasoGatoTecho: boolean
+    otros: string
+  }
+
+  proteccionCaidas: {
+    arnes: boolean
+    lineaVida: boolean
+    limitadorCaida: boolean
+    anclaje: boolean
+    otros: string
+  }
+
+  epp: {
+    zapatoSeguridad: boolean
+    guantesSeguridad: boolean
+    guantesPiel: boolean
+    cascoBarbiquejo: boolean
+    lentesSeguridad: boolean
+    taponesAuditivos: boolean
+    conchasAuditivas: boolean
+    chalecoReflectivo: boolean
+    otros: string
+  }
+
+  condicionesClimaticas: {
+    lluvia: boolean
+    viento: boolean
+    temperaturaExtrema: boolean
+    hieloGranizo: boolean
+    nieve: boolean
+    otros: string
+  }
+
+  requisitosAntesIniciar: {
+    areaDelimitada: boolean
+    serviciosDeshabilitados: boolean
+    controlEnergiasPeligrosas: boolean
+    inspeccionEquiposUtilizar: boolean
+    inspeccionArnes: boolean
+    inspeccionLineaVida: boolean
+    inspeccionEpp: boolean
+    sistemaComunicacion: boolean
+  }
+
+  observacionesComentarios: string
+}
+
 const MAX_PHOTOS = 4
 const MAX_FILE_SIZE_MB = 10
 
@@ -117,49 +141,83 @@ function sanitizeFileName(fileName: string) {
 }
 
 const initialForm: FormState = {
-  fechaTrabajo: getNowDate(),
-  horaInicio: getNowTime(),
-
   datosGenerales: {
-    nombreTrabajo: 'Carga de gas LP en azotea',
-    lugarEjecucion: '',
-    rutaAsignada: '',
-  },
-
-  descripcionActividad: {
-    tipoTrabajoAltura: 'Carga de gas en azotea',
+    unidad: '',
+    tipoTrabajo: 'Relleno de cilindro / tanque estacionario',
+    lugarArea: '',
     alturaAproximada: '',
-    herramientasEquipos: [],
-    materialesInvolucrados: 'GAS L.P.',
+    fecha: getNowDate(),
+    horaInicio: getNowTime(),
+    horaTermino: '',
+    tiempoEstimadoMin: '',
   },
 
-  evaluacionRiesgos: {
-    riesgoCaida: false,
-    riesgoElectrico: false,
-    riesgoSustanciasPeligrosas: false,
-    riesgoCondicionesClimaticas: false,
-    otrosRiesgos: '',
+  personalCompetente: {
+    tipo: 'Empleado',
+    cuentaConDC3: false,
+    evaluacionMedicaApto: false,
+    anexaResultadoMedico: false,
+  },
+
+  equipoUtilizar: {
+    andamio: false,
+    elevadorElectricoPersonal: false,
+    escaleraTijera: false,
+    escaleraExtension: true,
+    escaleraFija: false,
+    equipoElevacionArticulado: false,
+    escaleraMarina: false,
+    pasoGatoTecho: false,
+    otros: '',
+  },
+
+  proteccionCaidas: {
+    arnes: true,
+    lineaVida: true,
+    limitadorCaida: false,
+    anclaje: true,
+    otros: '',
   },
 
   epp: {
+    zapatoSeguridad: true,
     guantesSeguridad: true,
-    calzadoAntiderrapante: true,
-    ropaAlgodon: true,
+    guantesPiel: false,
+    cascoBarbiquejo: true,
+    lentesSeguridad: true,
+    taponesAuditivos: false,
+    conchasAuditivas: false,
+    chalecoReflectivo: true,
+    otros: '',
   },
 
-  condicionesPrevias: {
-    inspeccionAreaRealizada: false,
-    senalizacionColocada: false,
-    supervisionAsignada: false,
+  condicionesClimaticas: {
+    lluvia: false,
+    viento: false,
+    temperaturaExtrema: false,
+    hieloGranizo: false,
+    nieve: false,
+    otros: '',
   },
+
+  requisitosAntesIniciar: {
+    areaDelimitada: false,
+    serviciosDeshabilitados: false,
+    controlEnergiasPeligrosas: false,
+    inspeccionEquiposUtilizar: false,
+    inspeccionArnes: false,
+    inspeccionLineaVida: false,
+    inspeccionEpp: false,
+    sistemaComunicacion: false,
+  },
+
+  observacionesComentarios: '',
 }
 
 export default function NuevaRevision() {
-  const { user } = useAuth()
+  const { user, userProfile } = useAuth()
 
-  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [form, setForm] = useState<FormState>(initialForm)
-  const [loadingUser, setLoadingUser] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
@@ -175,39 +233,16 @@ export default function NuevaRevision() {
   }, [])
 
   useEffect(() => {
-    const loadUserProfile = async () => {
-      if (!user?.uid) {
-        setLoadingUser(false)
-        return
-      }
+    if (!userProfile) return
 
-      try {
-        const userRef = doc(db, 'users', user.uid)
-        const snap = await getDoc(userRef)
-
-        if (snap.exists()) {
-          const data = snap.data() as UserProfile
-          setProfile(data)
-
-          setForm((prev) => ({
-            ...prev,
-            datosGenerales: {
-              ...prev.datosGenerales,
-              rutaAsignada: data.rutaAsignada || '',
-            },
-          }))
-        } else {
-          setProfile(null)
-        }
-      } catch {
-        setError('No se pudo cargar la información del operador.')
-      } finally {
-        setLoadingUser(false)
-      }
-    }
-
-    loadUserProfile()
-  }, [user])
+    setForm((prev) => ({
+      ...prev,
+      datosGenerales: {
+        ...prev.datosGenerales,
+        unidad: userProfile.rutaAsignada || '',
+      },
+    }))
+  }, [userProfile])
 
   useEffect(() => {
     return () => {
@@ -215,55 +250,30 @@ export default function NuevaRevision() {
     }
   }, [photoPreviews])
 
-  const updateRootField = (
-    field: keyof Pick<FormState, 'fechaTrabajo' | 'horaInicio'>,
-    value: string
-  ) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-  }
+  type NestedSection =
+    | 'datosGenerales'
+    | 'personalCompetente'
+    | 'equipoUtilizar'
+    | 'proteccionCaidas'
+    | 'epp'
+    | 'condicionesClimaticas'
+    | 'requisitosAntesIniciar'
 
-  const updateSectionField = <
-    T extends keyof Pick<
-      FormState,
-      | 'datosGenerales'
-      | 'descripcionActividad'
-      | 'evaluacionRiesgos'
-      | 'epp'
-      | 'condicionesPrevias'
-    >,
-    K extends keyof FormState[T]
+  const updateNestedField = <
+    S extends NestedSection,
+    K extends keyof FormState[S]
   >(
-    section: T,
+    section: S,
     field: K,
-    value: FormState[T][K]
+    value: FormState[S][K]
   ) => {
     setForm((prev) => ({
       ...prev,
       [section]: {
-        ...prev[section],
+        ...(prev[section] as FormState[S]),
         [field]: value,
       },
     }))
-  }
-
-  const toggleTool = (tool: string) => {
-    setForm((prev) => {
-      const current = prev.descripcionActividad.herramientasEquipos
-      const exists = current.includes(tool)
-
-      return {
-        ...prev,
-        descripcionActividad: {
-          ...prev.descripcionActividad,
-          herramientasEquipos: exists
-            ? current.filter((item) => item !== tool)
-            : [...current, tool],
-        },
-      }
-    })
   }
 
   const rebuildPreviews = (files: File[]) => {
@@ -280,7 +290,6 @@ export default function NuevaRevision() {
     if (!files.length) return
 
     const onlyImages = files.filter((file) => file.type.startsWith('image/'))
-
     const validBySize = onlyImages.filter(
       (file) => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024
     )
@@ -304,62 +313,67 @@ export default function NuevaRevision() {
     rebuildPreviews(nextFiles)
   }
 
-  const datosServicioComplete = useMemo(() => {
+  const datosGeneralesComplete = useMemo(() => {
     return Boolean(
-      form.fechaTrabajo &&
-        form.horaInicio &&
-        form.datosGenerales.lugarEjecucion.trim() &&
-        form.descripcionActividad.alturaAproximada.trim()
+      form.datosGenerales.unidad.trim() &&
+      form.datosGenerales.lugarArea.trim() &&
+      form.datosGenerales.alturaAproximada.trim() &&
+      form.datosGenerales.fecha &&
+      form.datosGenerales.horaInicio &&
+      form.datosGenerales.tiempoEstimadoMin.trim()
     )
-  }, [
-    form.fechaTrabajo,
-    form.horaInicio,
-    form.datosGenerales.lugarEjecucion,
-    form.descripcionActividad.alturaAproximada,
-  ])
+  }, [form.datosGenerales])
 
-  const herramientasComplete = useMemo(() => {
-    return form.descripcionActividad.herramientasEquipos.length > 0
-  }, [form.descripcionActividad.herramientasEquipos])
+  const personalComplete = useMemo(() => {
+    return Boolean(userProfile?.fichaIdentificacion?.nombre)
+  }, [userProfile])
 
-  const riesgosComplete = useMemo(() => {
+  const equipoComplete = useMemo(() => {
     return (
-      form.evaluacionRiesgos.riesgoCaida ||
-      form.evaluacionRiesgos.riesgoElectrico ||
-      form.evaluacionRiesgos.riesgoSustanciasPeligrosas ||
-      form.evaluacionRiesgos.riesgoCondicionesClimaticas ||
-      form.evaluacionRiesgos.otrosRiesgos.trim().length > 0
+      Object.values(form.equipoUtilizar).some((value) => value === true) ||
+      form.equipoUtilizar.otros.trim().length > 0
     )
-  }, [form.evaluacionRiesgos])
+  }, [form.equipoUtilizar])
 
-  const condicionesComplete = useMemo(() => {
+  const seguridadComplete = useMemo(() => {
     return (
-      form.condicionesPrevias.inspeccionAreaRealizada &&
-      form.condicionesPrevias.senalizacionColocada &&
-      form.condicionesPrevias.supervisionAsignada
+      Object.values(form.proteccionCaidas).some((value) => value === true) ||
+      form.proteccionCaidas.otros.trim().length > 0
     )
-  }, [form.condicionesPrevias])
+  }, [form.proteccionCaidas])
 
-  const fotosComplete = useMemo(() => {
-    return photoFiles.length > 0
-  }, [photoFiles])
+  const requisitosComplete = useMemo(() => {
+    return form.requisitosAntesIniciar.areaDelimitada &&
+      form.requisitosAntesIniciar.inspeccionEquiposUtilizar &&
+      form.requisitosAntesIniciar.inspeccionEpp &&
+      form.requisitosAntesIniciar.sistemaComunicacion
+  }, [form.requisitosAntesIniciar])
 
   const progressCount = [
-    datosServicioComplete,
-    herramientasComplete,
-    riesgosComplete,
-    condicionesComplete,
-    fotosComplete,
+    datosGeneralesComplete,
+    personalComplete,
+    equipoComplete,
+    seguridadComplete,
+    requisitosComplete,
   ].filter(Boolean).length
+
+  const climaBloqueante =
+    form.condicionesClimaticas.lluvia ||
+    form.condicionesClimaticas.viento ||
+    form.condicionesClimaticas.temperaturaExtrema ||
+    form.condicionesClimaticas.hieloGranizo ||
+    form.condicionesClimaticas.nieve
 
   const formReady =
     !!user?.uid &&
-    !!profile &&
-    datosServicioComplete &&
-    herramientasComplete &&
-    riesgosComplete &&
-    condicionesComplete &&
-    fotosComplete
+    !!userProfile &&
+    userProfile.rol === 'operador' &&
+    datosGeneralesComplete &&
+    personalComplete &&
+    equipoComplete &&
+    seguridadComplete &&
+    requisitosComplete &&
+    !climaBloqueante
 
   const uploadPhotos = async (folio: string): Promise<UploadedPhoto[]> => {
     if (!user?.uid) return []
@@ -396,25 +410,38 @@ export default function NuevaRevision() {
     setError('')
     setSuccess('')
 
-    if (!user?.uid) {
-      setError('No hay un usuario autenticado.')
-      return
-    }
-
-    if (!profile) {
+    if (!user?.uid || !userProfile) {
       setError('No se encontró la información del operador.')
       return
     }
 
-    if (!formReady) {
-      setError('Complete todos los apartados antes de enviar.')
+    if (userProfile.rol !== 'operador') {
+      setError('Solo un operador puede enviar esta solicitud.')
       return
     }
 
-    const altura = Number(form.descripcionActividad.alturaAproximada)
+    if (climaBloqueante) {
+      setError(
+        'No se puede autorizar la solicitud si existe una condición climatológica bloqueante.'
+      )
+      return
+    }
+
+    if (!formReady) {
+      setError('Complete los campos obligatorios antes de enviar.')
+      return
+    }
+
+    const altura = Number(form.datosGenerales.alturaAproximada)
+    const tiempoEstimadoMin = Number(form.datosGenerales.tiempoEstimadoMin)
 
     if (Number.isNaN(altura) || altura <= 0) {
-      setError('La altura aproximada debe ser un número válido mayor a 0.')
+      setError('La altura aproximada debe ser mayor a 0.')
+      return
+    }
+
+    if (Number.isNaN(tiempoEstimadoMin) || tiempoEstimadoMin <= 0) {
+      setError('El tiempo estimado debe ser mayor a 0.')
       return
     }
 
@@ -425,53 +452,90 @@ export default function NuevaRevision() {
       const uploadedPhotos = await uploadPhotos(folio)
 
       const payload = {
-        operadorId: user.uid,
-        operadorNombre: profile.nombre || '',
-        operadorTelefono: profile.telefono || '',
-        operadorCorreo: profile.correo || user.email || '',
-        rol: profile.rol || 'operador',
-
         folio,
         fechaSolicitud: serverTimestamp(),
-        fechaTrabajo: form.fechaTrabajo,
-        horaInicio: form.horaInicio,
-        horaTermino: null,
+        estatus: 'pendiente',
+        autorizacion: false,
+
+        operador: {
+          uid: user.uid,
+          nombre: userProfile.fichaIdentificacion.nombre,
+          numeroEmpleado: userProfile.fichaIdentificacion.numeroEmpleado,
+          telefono: userProfile.fichaIdentificacion.telefono,
+          correo: userProfile.correo || user.email || '',
+          rol: userProfile.rol,
+          rutaAsignada: userProfile.rutaAsignada || '',
+          area: userProfile.fichaIdentificacion.area,
+          cargo: userProfile.fichaIdentificacion.cargo,
+        },
 
         datosGenerales: {
-          nombreTrabajo: form.datosGenerales.nombreTrabajo,
-          lugarEjecucion: form.datosGenerales.lugarEjecucion.trim(),
-          rutaAsignada: form.datosGenerales.rutaAsignada.trim(),
-        },
-
-        descripcionActividad: {
-          tipoTrabajoAltura: form.descripcionActividad.tipoTrabajoAltura,
+          unidad: form.datosGenerales.unidad.trim(),
+          responsableAutorizaNombre: '',
+          supervisorNombre: '',
+          tipoTrabajo: form.datosGenerales.tipoTrabajo,
+          lugarArea: form.datosGenerales.lugarArea.trim(),
           alturaAproximada: altura,
-          herramientasEquipos: form.descripcionActividad.herramientasEquipos,
-          materialesInvolucrados:
-            form.descripcionActividad.materialesInvolucrados,
+          fecha: form.datosGenerales.fecha,
+          horaInicio: form.datosGenerales.horaInicio,
+          horaTermino: form.datosGenerales.horaTermino || '',
+          tiempoEstimadoMin,
         },
 
-        evaluacionRiesgos: {
-          riesgoCaida: form.evaluacionRiesgos.riesgoCaida,
-          riesgoElectrico: form.evaluacionRiesgos.riesgoElectrico,
-          riesgoSustanciasPeligrosas:
-            form.evaluacionRiesgos.riesgoSustanciasPeligrosas,
-          riesgoCondicionesClimaticas:
-            form.evaluacionRiesgos.riesgoCondicionesClimaticas,
-          otrosRiesgos: form.evaluacionRiesgos.otrosRiesgos.trim(),
+        personalCompetente: [
+          {
+            numeroEmpleado: userProfile.fichaIdentificacion.numeroEmpleado || '',
+            nombre: userProfile.fichaIdentificacion.nombre || '',
+            tipo: form.personalCompetente.tipo,
+            cuentaConDC3: form.personalCompetente.cuentaConDC3,
+            evaluacionMedicaApto: form.personalCompetente.evaluacionMedicaApto,
+            anexaResultadoMedico: form.personalCompetente.anexaResultadoMedico,
+            firmaEmpleado: '',
+          },
+        ],
+
+        equipoUtilizar: {
+          ...form.equipoUtilizar,
+          otros: form.equipoUtilizar.otros.trim(),
+        },
+
+        proteccionCaidas: {
+          ...form.proteccionCaidas,
+          otros: form.proteccionCaidas.otros.trim(),
         },
 
         epp: {
-          guantesSeguridad: form.epp.guantesSeguridad,
-          calzadoAntiderrapante: form.epp.calzadoAntiderrapante,
-          ropaAlgodon: form.epp.ropaAlgodon,
+          ...form.epp,
+          otros: form.epp.otros.trim(),
         },
 
-        condicionesPrevias: {
-          inspeccionAreaRealizada:
-            form.condicionesPrevias.inspeccionAreaRealizada,
-          senalizacionColocada: form.condicionesPrevias.senalizacionColocada,
-          supervisionAsignada: form.condicionesPrevias.supervisionAsignada,
+        condicionesClimaticas: {
+          ...form.condicionesClimaticas,
+          otros: form.condicionesClimaticas.otros.trim(),
+          bloqueoAutomatico: climaBloqueante,
+        },
+
+        requisitosAntesIniciar: form.requisitosAntesIniciar,
+
+        requisitosAlTerminar: {
+          barrerasRetiradas: false,
+          supervisorNotificado: false,
+          personalAreaNotificado: false,
+          areaLimpiaOrdenada: false,
+          herramientasRecogidas: false,
+          materialesRetirados: false,
+          aprobadorCierreNombre: '',
+          aprobadorCierreFirma: '',
+          aprobadorCierreFecha: '',
+        },
+
+        observacionesComentarios: form.observacionesComentarios.trim(),
+
+        aprobaciones: {
+          aprobadorAreaNombre: '',
+          empleadoTurnoFirma: '',
+          supervisorAreaFirma: '',
+          contratistaFirma: '',
         },
 
         evidencia: {
@@ -479,8 +543,6 @@ export default function NuevaRevision() {
           fotos: uploadedPhotos,
         },
 
-        autorizacion: false,
-        estatus: 'pendiente',
         notificacionEnviada: false,
         fechaAutorizacion: null,
         autorizadoPor: null,
@@ -496,11 +558,11 @@ export default function NuevaRevision() {
 
       setForm({
         ...initialForm,
-        fechaTrabajo: getNowDate(),
-        horaInicio: getNowTime(),
         datosGenerales: {
           ...initialForm.datosGenerales,
-          rutaAsignada: profile.rutaAsignada || '',
+          unidad: userProfile.rutaAsignada || '',
+          fecha: getNowDate(),
+          horaInicio: getNowTime(),
         },
       })
     } catch (err) {
@@ -511,7 +573,7 @@ export default function NuevaRevision() {
     }
   }
 
-  if (loadingUser) {
+  if (!userProfile) {
     return (
       <section className="nueva-revision-page">
         <div className="nueva-revision-loading">
@@ -524,14 +586,12 @@ export default function NuevaRevision() {
   return (
     <section className="nueva-revision-page">
       <header className="nueva-revision-page__header">
-        <span className="nueva-revision-page__eyebrow">Nueva revisión</span>
-        <h1>Complete la inspección antes de iniciar el trabajo</h1>
-        <p>
-          Registre solo lo necesario para solicitar autorización en el momento.
-        </p>
+        <span className="nueva-revision-page__eyebrow">Solicitud de trabajo</span>
+        <h1>Permiso para trabajo en alturas</h1>
+        <p>Capture únicamente la información necesaria antes de iniciar.</p>
 
         <div className="nueva-revision-progress">
-          <span>{progressCount}/5 secciones completas</span>
+          <span>{progressCount}/5 apartados completos</span>
           <div className="nueva-revision-progress__bar">
             <div
               className="nueva-revision-progress__fill"
@@ -547,14 +607,23 @@ export default function NuevaRevision() {
         </div>
 
         <div className="operator-card__content">
-          <strong>{profile?.nombre || 'Operador'}</strong>
-          <span>{profile?.correo || user?.email || 'Sin correo'}</span>
+          <strong>{userProfile.fichaIdentificacion.nombre || 'Operador'}</strong>
+          <span>
+            #{userProfile.fichaIdentificacion.numeroEmpleado || 'Sin número'} ·{' '}
+            {userProfile.correo || 'Sin correo'}
+          </span>
           <small>
-            Ruta: {profile?.rutaAsignada || 'Sin ruta'} · Rol:{' '}
-            {profile?.rol || 'operador'}
+            Unidad: {userProfile.rutaAsignada || 'Sin ruta'} · Cargo:{' '}
+            {userProfile.fichaIdentificacion.cargo || 'Operador'}
           </small>
         </div>
       </div>
+
+      {climaBloqueante && (
+        <div className="feedback feedback--error">
+          Existe una condición climatológica que bloquea la autorización del permiso.
+        </div>
+      )}
 
       <div className="section-card">
         <div className="section-card__head">
@@ -563,64 +632,20 @@ export default function NuevaRevision() {
               <ClipboardList size={18} />
             </div>
             <div>
-              <h3>Datos del servicio</h3>
-              <p>Ubicación, fecha, hora y altura aproximada.</p>
+              <h3>Datos generales</h3>
+              <p>Unidad, lugar, altura, fecha y tiempo estimado.</p>
             </div>
           </div>
-
-          <span
-            className={`status-pill ${datosServicioComplete ? 'is-complete' : ''}`}
-          >
-            {datosServicioComplete ? 'Completo' : 'Pendiente'}
-          </span>
         </div>
 
         <div className="form-grid">
           <label className="field">
-            <span>Fecha de trabajo</span>
-            <input
-              type="date"
-              value={form.fechaTrabajo}
-              onChange={(e) => updateRootField('fechaTrabajo', e.target.value)}
-            />
-          </label>
-
-          <label className="field">
-            <span>Hora de inicio</span>
-            <input
-              type="time"
-              value={form.horaInicio}
-              onChange={(e) => updateRootField('horaInicio', e.target.value)}
-            />
-          </label>
-
-          <label className="field field--full">
-            <span>Ubicación / dirección</span>
+            <span>Unidad</span>
             <input
               type="text"
-              value={form.datosGenerales.lugarEjecucion}
+              value={form.datosGenerales.unidad}
               onChange={(e) =>
-                updateSectionField(
-                  'datosGenerales',
-                  'lugarEjecucion',
-                  e.target.value
-                )
-              }
-              placeholder="Ej. Av. Principal 123"
-            />
-          </label>
-
-          <label className="field">
-            <span>Ruta</span>
-            <input
-              type="text"
-              value={form.datosGenerales.rutaAsignada}
-              onChange={(e) =>
-                updateSectionField(
-                  'datosGenerales',
-                  'rutaAsignada',
-                  e.target.value
-                )
+                updateNestedField('datosGenerales', 'unidad', e.target.value)
               }
             />
           </label>
@@ -631,36 +656,76 @@ export default function NuevaRevision() {
               type="number"
               min="1"
               step="0.5"
-              value={form.descripcionActividad.alturaAproximada}
+              value={form.datosGenerales.alturaAproximada}
               onChange={(e) =>
-                updateSectionField(
-                  'descripcionActividad',
+                updateNestedField(
+                  'datosGenerales',
                   'alturaAproximada',
                   e.target.value
                 )
               }
-              placeholder="Ej. 3"
             />
           </label>
 
           <label className="field field--full">
-            <span>Tipo de trabajo</span>
-            <select
-              value={form.descripcionActividad.tipoTrabajoAltura}
+            <span>Lugar o área</span>
+            <input
+              type="text"
+              value={form.datosGenerales.lugarArea}
               onChange={(e) =>
-                updateSectionField(
-                  'descripcionActividad',
-                  'tipoTrabajoAltura',
+                updateNestedField('datosGenerales', 'lugarArea', e.target.value)
+              }
+              placeholder="Ej. Techo de casa habitación"
+            />
+          </label>
+
+          <label className="field">
+            <span>Fecha</span>
+            <input
+              type="date"
+              value={form.datosGenerales.fecha}
+              onChange={(e) =>
+                updateNestedField('datosGenerales', 'fecha', e.target.value)
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span>Hora de inicio</span>
+            <input
+              type="time"
+              value={form.datosGenerales.horaInicio}
+              onChange={(e) =>
+                updateNestedField('datosGenerales', 'horaInicio', e.target.value)
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span>Hora de término</span>
+            <input
+              type="time"
+              value={form.datosGenerales.horaTermino}
+              onChange={(e) =>
+                updateNestedField('datosGenerales', 'horaTermino', e.target.value)
+              }
+            />
+          </label>
+
+          <label className="field">
+            <span>Tiempo estimado (min)</span>
+            <input
+              type="number"
+              min="1"
+              value={form.datosGenerales.tiempoEstimadoMin}
+              onChange={(e) =>
+                updateNestedField(
+                  'datosGenerales',
+                  'tiempoEstimadoMin',
                   e.target.value
                 )
               }
-            >
-              {WORK_TYPE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+            />
           </label>
         </div>
       </div>
@@ -669,32 +734,306 @@ export default function NuevaRevision() {
         <div className="section-card__head">
           <div className="section-card__titleWrap">
             <div className="section-card__icon">
-              <FileText size={18} />
+              <Users size={18} />
             </div>
             <div>
-              <h3>Herramientas</h3>
-              <p>Seleccione lo que llevará el operador.</p>
+              <h3>Personal autorizado</h3>
+              <p>Se llena casi todo automáticamente con los datos del operador.</p>
             </div>
           </div>
+        </div>
 
-          <span
-            className={`status-pill ${herramientasComplete ? 'is-complete' : ''}`}
-          >
-            {herramientasComplete ? 'Completo' : 'Pendiente'}
-          </span>
+        <div className="form-grid">
+          <label className="field">
+            <span># Empleado</span>
+            <input
+              type="text"
+              value={userProfile.fichaIdentificacion.numeroEmpleado || ''}
+              disabled
+            />
+          </label>
+
+          <label className="field field--full">
+            <span>Nombre del empleado autorizado</span>
+            <input
+              type="text"
+              value={userProfile.fichaIdentificacion.nombre || ''}
+              disabled
+            />
+          </label>
+
+          <label className="field">
+            <span>Tipo</span>
+            <select
+              value={form.personalCompetente.tipo}
+              onChange={(e) =>
+                updateNestedField(
+                  'personalCompetente',
+                  'tipo',
+                  e.target.value as 'Empleado' | 'Contratista'
+                )
+              }
+            >
+              <option value="Empleado">Empleado</option>
+              <option value="Contratista">Contratista</option>
+            </select>
+          </label>
+
+          <label className="check-item">
+            <input
+              type="checkbox"
+              checked={form.personalCompetente.cuentaConDC3}
+              onChange={(e) =>
+                updateNestedField(
+                  'personalCompetente',
+                  'cuentaConDC3',
+                  e.target.checked
+                )
+              }
+            />
+            <span>Cuenta con DC3</span>
+          </label>
+
+          <label className="check-item">
+            <input
+              type="checkbox"
+              checked={form.personalCompetente.evaluacionMedicaApto}
+              onChange={(e) =>
+                updateNestedField(
+                  'personalCompetente',
+                  'evaluacionMedicaApto',
+                  e.target.checked
+                )
+              }
+            />
+            <span>Evaluación médica apto</span>
+          </label>
+
+          <label className="check-item">
+            <input
+              type="checkbox"
+              checked={form.personalCompetente.anexaResultadoMedico}
+              onChange={(e) =>
+                updateNestedField(
+                  'personalCompetente',
+                  'anexaResultadoMedico',
+                  e.target.checked
+                )
+              }
+            />
+            <span>Anexa resultado médico</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="section-card">
+        <div className="section-card__head">
+          <div className="section-card__titleWrap">
+            <div className="section-card__icon">
+              <Wrench size={18} />
+            </div>
+            <div>
+              <h3>Equipo a utilizar</h3>
+              <p>Marque solo lo que llevará realmente.</p>
+            </div>
+          </div>
         </div>
 
         <div className="checks-grid">
-          {TOOL_OPTIONS.map((tool) => (
-            <label className="check-item" key={tool}>
+          {[
+            ['andamio', 'Andamio'],
+            ['elevadorElectricoPersonal', 'Elevador eléctrico personal'],
+            ['escaleraTijera', 'Escalera tijera'],
+            ['escaleraExtension', 'Escalera extensión'],
+            ['escaleraFija', 'Escalera fija'],
+            ['equipoElevacionArticulado', 'Equipo elevación articulado'],
+            ['escaleraMarina', 'Escalera marina'],
+            ['pasoGatoTecho', 'Paso de gato en techo'],
+          ].map(([key, label]) => (
+            <label className="check-item" key={key}>
               <input
                 type="checkbox"
-                checked={form.descripcionActividad.herramientasEquipos.includes(
-                  tool
-                )}
-                onChange={() => toggleTool(tool)}
+                checked={form.equipoUtilizar[key as keyof FormState['equipoUtilizar']] as boolean}
+                onChange={(e) =>
+                  updateNestedField(
+                    'equipoUtilizar',
+                    key as keyof FormState['equipoUtilizar'],
+                    e.target.checked as never
+                  )
+                }
               />
-              <span>{tool}</span>
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+
+        <label className="field field--full field--top">
+          <span>Otros</span>
+          <input
+            type="text"
+            value={form.equipoUtilizar.otros}
+            onChange={(e) =>
+              updateNestedField('equipoUtilizar', 'otros', e.target.value)
+            }
+          />
+        </label>
+      </div>
+
+      <div className="section-card">
+        <div className="section-card__head">
+          <div className="section-card__titleWrap">
+            <div className="section-card__icon">
+              <ShieldCheck size={18} />
+            </div>
+            <div>
+              <h3>Protección y condiciones</h3>
+              <p>Protección contra caídas, EPP, clima y revisión previa.</p>
+            </div>
+          </div>
+        </div>
+
+        <h4>Sistema de protección contra caídas</h4>
+        <div className="checks-grid">
+          {[
+            ['arnes', 'Arnés'],
+            ['lineaVida', 'Línea de vida'],
+            ['limitadorCaida', 'Limitador de caída'],
+            ['anclaje', 'Anclaje'],
+          ].map(([key, label]) => (
+            <label className="check-item" key={key}>
+              <input
+                type="checkbox"
+                checked={form.proteccionCaidas[key as keyof FormState['proteccionCaidas']] as boolean}
+                onChange={(e) =>
+                  updateNestedField(
+                    'proteccionCaidas',
+                    key as keyof FormState['proteccionCaidas'],
+                    e.target.checked as never
+                  )
+                }
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+
+        <label className="field field--full field--top">
+          <span>Otros</span>
+          <input
+            type="text"
+            value={form.proteccionCaidas.otros}
+            onChange={(e) =>
+              updateNestedField('proteccionCaidas', 'otros', e.target.value)
+            }
+          />
+        </label>
+
+        <h4>Equipo de protección personal</h4>
+        <div className="checks-grid">
+          {[
+            ['zapatoSeguridad', 'Zapato de seguridad'],
+            ['guantesSeguridad', 'Guantes de seguridad'],
+            ['guantesPiel', 'Guantes de piel'],
+            ['cascoBarbiquejo', 'Casco con barbiquejo'],
+            ['lentesSeguridad', 'Lentes de seguridad'],
+            ['taponesAuditivos', 'Tapones auditivos'],
+            ['conchasAuditivas', 'Conchas auditivas'],
+            ['chalecoReflectivo', 'Chaleco reflectivo'],
+          ].map(([key, label]) => (
+            <label className="check-item" key={key}>
+              <input
+                type="checkbox"
+                checked={form.epp[key as keyof FormState['epp']] as boolean}
+                onChange={(e) =>
+                  updateNestedField(
+                    'epp',
+                    key as keyof FormState['epp'],
+                    e.target.checked as never
+                  )
+                }
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+
+        <label className="field field--full field--top">
+          <span>Otros</span>
+          <input
+            type="text"
+            value={form.epp.otros}
+            onChange={(e) =>
+              updateNestedField('epp', 'otros', e.target.value)
+            }
+          />
+        </label>
+
+        <h4>Condiciones climatológicas</h4>
+        <div className="checks-grid">
+          {[
+            ['lluvia', 'Lluvia'],
+            ['viento', 'Viento'],
+            ['temperaturaExtrema', 'Temperatura extrema'],
+            ['hieloGranizo', 'Hielo / granizo'],
+            ['nieve', 'Nieve'],
+          ].map(([key, label]) => (
+            <label className="check-item" key={key}>
+              <input
+                type="checkbox"
+                checked={form.condicionesClimaticas[key as keyof FormState['condicionesClimaticas']] as boolean}
+                onChange={(e) =>
+                  updateNestedField(
+                    'condicionesClimaticas',
+                    key as keyof FormState['condicionesClimaticas'],
+                    e.target.checked as never
+                  )
+                }
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+
+        <label className="field field--full field--top">
+          <span>Otros</span>
+          <input
+            type="text"
+            value={form.condicionesClimaticas.otros}
+            onChange={(e) =>
+              updateNestedField(
+                'condicionesClimaticas',
+                'otros',
+                e.target.value
+              )
+            }
+          />
+        </label>
+
+        <h4>Requisitos antes de iniciar</h4>
+        <div className="checks-grid">
+          {[
+            ['areaDelimitada', 'Área delimitada'],
+            ['serviciosDeshabilitados', 'Servicios deshabilitados si aplica'],
+            ['controlEnergiasPeligrosas', 'Control de energías peligrosas'],
+            ['inspeccionEquiposUtilizar', 'Inspección de equipos a utilizar'],
+            ['inspeccionArnes', 'Inspección de arnés'],
+            ['inspeccionLineaVida', 'Inspección de línea de vida'],
+            ['inspeccionEpp', 'Inspección de EPP'],
+            ['sistemaComunicacion', 'Sistema de comunicación efectivo'],
+          ].map(([key, label]) => (
+            <label className="check-item" key={key}>
+              <input
+                type="checkbox"
+                checked={form.requisitosAntesIniciar[key as keyof FormState['requisitosAntesIniciar']] as boolean}
+                onChange={(e) =>
+                  updateNestedField(
+                    'requisitosAntesIniciar',
+                    key as keyof FormState['requisitosAntesIniciar'],
+                    e.target.checked as never
+                  )
+                }
+              />
+              <span>{label}</span>
             </label>
           ))}
         </div>
@@ -707,184 +1046,25 @@ export default function NuevaRevision() {
               <AlertTriangle size={18} />
             </div>
             <div>
-              <h3>Evaluación de riesgos</h3>
-              <p>Marque los riesgos detectados en este servicio.</p>
+              <h3>Observaciones y evidencia</h3>
+              <p>Agregue algún comentario relevante y, si aplica, fotografías.</p>
             </div>
           </div>
-
-          <span
-            className={`status-pill ${riesgosComplete ? 'is-complete' : ''}`}
-          >
-            {riesgosComplete ? 'Completo' : 'Pendiente'}
-          </span>
-        </div>
-
-        <div className="checks-grid">
-          <label className="check-item">
-            <input
-              type="checkbox"
-              checked={form.evaluacionRiesgos.riesgoCaida}
-              onChange={(e) =>
-                updateSectionField(
-                  'evaluacionRiesgos',
-                  'riesgoCaida',
-                  e.target.checked
-                )
-              }
-            />
-            <span>Riesgo de caída</span>
-          </label>
-
-          <label className="check-item">
-            <input
-              type="checkbox"
-              checked={form.evaluacionRiesgos.riesgoElectrico}
-              onChange={(e) =>
-                updateSectionField(
-                  'evaluacionRiesgos',
-                  'riesgoElectrico',
-                  e.target.checked
-                )
-              }
-            />
-            <span>Riesgo eléctrico</span>
-          </label>
-
-          <label className="check-item">
-            <input
-              type="checkbox"
-              checked={form.evaluacionRiesgos.riesgoSustanciasPeligrosas}
-              onChange={(e) =>
-                updateSectionField(
-                  'evaluacionRiesgos',
-                  'riesgoSustanciasPeligrosas',
-                  e.target.checked
-                )
-              }
-            />
-            <span>Sustancias peligrosas</span>
-          </label>
-
-          <label className="check-item">
-            <input
-              type="checkbox"
-              checked={form.evaluacionRiesgos.riesgoCondicionesClimaticas}
-              onChange={(e) =>
-                updateSectionField(
-                  'evaluacionRiesgos',
-                  'riesgoCondicionesClimaticas',
-                  e.target.checked
-                )
-              }
-            />
-            <span>Condiciones climáticas</span>
-          </label>
         </div>
 
         <label className="field field--full field--top">
-          <span>Otros riesgos</span>
+          <span>Observaciones / comentarios</span>
           <textarea
-            rows={2}
-            value={form.evaluacionRiesgos.otrosRiesgos}
+            rows={3}
+            value={form.observacionesComentarios}
             onChange={(e) =>
-              updateSectionField(
-                'evaluacionRiesgos',
-                'otrosRiesgos',
-                e.target.value
-              )
+              setForm((prev) => ({
+                ...prev,
+                observacionesComentarios: e.target.value,
+              }))
             }
-            placeholder="Ej. Piso resbaloso, objetos suspendidos, cables cercanos"
           />
         </label>
-      </div>
-
-      <div className="section-card">
-        <div className="section-card__head">
-          <div className="section-card__titleWrap">
-            <div className="section-card__icon">
-              <ShieldCheck size={18} />
-            </div>
-            <div>
-              <h3>Condiciones del área</h3>
-              <p>Marque lo mínimo necesario antes de subir.</p>
-            </div>
-          </div>
-
-          <span
-            className={`status-pill ${condicionesComplete ? 'is-complete' : ''}`}
-          >
-            {condicionesComplete ? 'Completo' : 'Pendiente'}
-          </span>
-        </div>
-
-        <div className="checks-grid">
-          <label className="check-item">
-            <input
-              type="checkbox"
-              checked={form.condicionesPrevias.inspeccionAreaRealizada}
-              onChange={(e) =>
-                updateSectionField(
-                  'condicionesPrevias',
-                  'inspeccionAreaRealizada',
-                  e.target.checked
-                )
-              }
-            />
-            <span>Inspección realizada</span>
-          </label>
-
-          <label className="check-item">
-            <input
-              type="checkbox"
-              checked={form.condicionesPrevias.senalizacionColocada}
-              onChange={(e) =>
-                updateSectionField(
-                  'condicionesPrevias',
-                  'senalizacionColocada',
-                  e.target.checked
-                )
-              }
-            />
-            <span>Señalización colocada</span>
-          </label>
-
-          <label className="check-item">
-            <input
-              type="checkbox"
-              checked={form.condicionesPrevias.supervisionAsignada}
-              onChange={(e) =>
-                updateSectionField(
-                  'condicionesPrevias',
-                  'supervisionAsignada',
-                  e.target.checked
-                )
-              }
-            />
-            <span>Supervisión asignada</span>
-          </label>
-        </div>
-      </div>
-
-      <div className="section-card">
-        <div className="section-card__head">
-          <div className="section-card__titleWrap">
-            <div className="section-card__icon">
-              <Camera size={18} />
-            </div>
-            <div>
-              <h3>Evidencia fotográfica</h3>
-              <p>
-                {isMobile
-                  ? 'Tome una foto o selecciónela desde el teléfono.'
-                  : 'Seleccione imágenes desde su equipo.'}
-              </p>
-            </div>
-          </div>
-
-          <span className={`status-pill ${fotosComplete ? 'is-complete' : ''}`}>
-            {fotosComplete ? 'Completo' : 'Pendiente'}
-          </span>
-        </div>
 
         <label className="upload-box">
           <input
@@ -894,7 +1074,6 @@ export default function NuevaRevision() {
             onChange={handlePhotosChange}
             {...(isMobile ? { capture: 'environment' as const } : {})}
           />
-
           <div className="upload-box__content">
             <ImagePlus size={22} />
             <strong>
@@ -936,7 +1115,7 @@ export default function NuevaRevision() {
         disabled={!formReady || saving}
         onClick={handleSubmit}
       >
-        {saving ? 'Enviando solicitud...' : 'Enviar a autorización'}
+        {saving ? 'Enviando solicitud...' : 'Enviar solicitud'}
       </button>
     </section>
   )
