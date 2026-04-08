@@ -297,6 +297,41 @@
   color: #73849a;
 }
 
+.evidence-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.camera-button {
+  width: 100%;
+  min-height: 58px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #5c83c9, #456fb6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 14px 28px rgba(69, 111, 182, 0.24);
+  cursor: pointer;
+}
+
+.camera-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.camera-help {
+  margin: 0;
+  color: #6e7f95;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -383,6 +418,84 @@
   background: #c8d2df;
   box-shadow: none;
   cursor: not-allowed;
+}
+
+.camera-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.camera-modal {
+  width: min(100%, 420px);
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(219, 228, 241, 0.95);
+  box-shadow: 0 24px 50px rgba(30, 41, 59, 0.24);
+  padding: 22px;
+}
+
+.camera-modal__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: #eef4ff;
+  color: #4f79c3;
+  margin-bottom: 14px;
+}
+
+.camera-modal h3 {
+  margin: 0 0 10px;
+  color: #223047;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.camera-modal p {
+  margin: 0;
+  color: #5f6f84;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.camera-modal__warning {
+  margin-top: 12px !important;
+  color: #b45309 !important;
+  font-weight: 700;
+}
+
+.camera-modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.camera-modal__btn {
+  min-width: 110px;
+  height: 44px;
+  border-radius: 14px;
+  border: none;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.camera-modal__btn--ghost {
+  background: #eef2f7;
+  color: #506176;
+}
+
+.camera-modal__btn--primary {
+  background: linear-gradient(180deg, #5c83c9, #456fb6);
+  color: #fff;
 }
 
 @media (min-width: 640px) {

@@ -1,4 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import {
+  Camera,
+  CameraDirection,
+  CameraResultType,
+  CameraSource,
+} from '@capacitor/camera'
+import type {CameraPermissionState } from '@capacitor/camera'
 import {
   addDoc,
   collection,
@@ -11,6 +19,7 @@ import {
 } from 'firebase/storage'
 import {
   AlertTriangle,
+  Camera as CameraIcon,
   CheckCircle2,
   ClipboardList,
   HardHat,
@@ -214,6 +223,15 @@ const initialForm: FormState = {
   observacionesComentarios: '',
 }
 
+type NestedSection =
+  | 'datosGenerales'
+  | 'personalCompetente'
+  | 'equipoUtilizar'
+  | 'proteccionCaidas'
+  | 'epp'
+  | 'condicionesClimaticas'
+  | 'requisitosAntesIniciar'
+
 export default function NuevaRevision() {
   const { user, userProfile } = useAuth()
 
@@ -225,12 +243,21 @@ export default function NuevaRevision() {
   const [photoFiles, setPhotoFiles] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
 
+  const [cameraBusy, setCameraBusy] = useState(false)
+  const [cameraPermissionModalOpen, setCameraPermissionModalOpen] = useState(false)
+  const [cameraPermissionDeniedForever, setCameraPermissionDeniedForever] =
+    useState(false)
+
   const isMobile = useMemo(() => {
     if (typeof navigator === 'undefined') return false
     return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(
       navigator.userAgent
     )
   }, [])
+
+  const isNativeMobile = useMemo(() => {
+    return isMobile && Capacitor.isNativePlatform()
+  }, [isMobile])
 
   useEffect(() => {
     if (!userProfile) return
@@ -249,15 +276,6 @@ export default function NuevaRevision() {
       photoPreviews.forEach((url) => URL.revokeObjectURL(url))
     }
   }, [photoPreviews])
-
-  type NestedSection =
-    | 'datosGenerales'
-    | 'personalCompetente'
-    | 'equipoUtilizar'
-    | 'proteccionCaidas'
-    | 'epp'
-    | 'condicionesClimaticas'
-    | 'requisitosAntesIniciar'
 
   const updateNestedField = <
     S extends NestedSection,
@@ -283,13 +301,15 @@ export default function NuevaRevision() {
     setPhotoPreviews(previews)
   }
 
-  const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const validateAndMergePhotos = (incomingFiles: File[]) => {
     setError('')
 
-    const files = Array.from(e.target.files || [])
-    if (!files.length) return
+    if (!incomingFiles.length) return
 
-    const onlyImages = files.filter((file) => file.type.startsWith('image/'))
+    const onlyImages = incomingFiles.filter((file) =>
+      file.type.startsWith('image/')
+    )
+
     const validBySize = onlyImages.filter(
       (file) => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024
     )
@@ -305,7 +325,134 @@ export default function NuevaRevision() {
     }
 
     rebuildPreviews(mergedFiles)
+  }
+
+  const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    validateAndMergePhotos(files)
     e.target.value = ''
+  }
+
+  const fileFromWebPath = async (
+    webPath: string,
+    fileName: string,
+    mimeType: string
+  ) => {
+    const response = await fetch(webPath)
+    const blob = await response.blob()
+    return new File([blob], fileName, {
+      type: mimeType || blob.type || 'image/jpeg',
+    })
+  }
+
+  const normalizePermissionState = (state?: CameraPermissionState) => {
+    return state === 'granted'
+  }
+
+  const verifyCameraPermissions = async () => {
+    try {
+      const permissions = await Camera.checkPermissions()
+
+      const hasCamera = normalizePermissionState(permissions.camera)
+      const hasPhotos = !permissions.photos || normalizePermissionState(permissions.photos)
+
+      if (hasCamera && hasPhotos) {
+        return true
+      }
+
+      setCameraPermissionDeniedForever(
+        permissions.camera === 'denied' || permissions.photos === 'denied'
+      )
+      setCameraPermissionModalOpen(true)
+      return false
+    } catch (err) {
+      console.error(err)
+      setCameraPermissionModalOpen(true)
+      return false
+    }
+  }
+
+  const requestCameraPermissions = async () => {
+    try {
+      const permissions = await Camera.requestPermissions({
+        permissions: ['camera'],
+      })
+
+      const granted = normalizePermissionState(permissions.camera)
+
+      if (!granted) {
+        setCameraPermissionDeniedForever(permissions.camera === 'denied')
+        setError(
+          permissions.camera === 'denied'
+            ? 'El permiso de cámara fue denegado. Debe habilitarlo en la configuración del dispositivo.'
+            : 'No se otorgó permiso para usar la cámara.'
+        )
+        return false
+      }
+
+      setCameraPermissionDeniedForever(false)
+      setCameraPermissionModalOpen(false)
+      return true
+    } catch (err) {
+      console.error(err)
+      setError('No fue posible solicitar el permiso de cámara.')
+      return false
+    }
+  }
+
+  const handleTakePhoto = async () => {
+    setError('')
+
+    if (photoFiles.length >= MAX_PHOTOS) {
+      setError(`Solo puede subir un máximo de ${MAX_PHOTOS} fotos.`)
+      return
+    }
+
+    const hasPermission = await verifyCameraPermissions()
+    if (!hasPermission) return
+
+    try {
+      setCameraBusy(true)
+
+      const image = await Camera.getPhoto({
+        quality: 85,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera,
+        direction: CameraDirection.Rear,
+        correctOrientation: true,
+      })
+
+      if (!image.webPath) {
+        setError('No se pudo obtener la imagen capturada.')
+        return
+      }
+
+      const extension = image.format ? image.format.toLowerCase() : 'jpg'
+      const fileName = `foto_camara_${Date.now()}.${extension}`
+      const mimeType =
+        extension === 'png'
+          ? 'image/png'
+          : extension === 'gif'
+            ? 'image/gif'
+            : 'image/jpeg'
+
+      const file = await fileFromWebPath(image.webPath, fileName, mimeType)
+      validateAndMergePhotos([file])
+    } catch (err: any) {
+      console.error(err)
+
+      if (
+        typeof err?.message === 'string' &&
+        err.message.toLowerCase().includes('cancel')
+      ) {
+        return
+      }
+
+      setError('No fue posible abrir la cámara o capturar la foto.')
+    } finally {
+      setCameraBusy(false)
+    }
   }
 
   const removePhoto = (index: number) => {
@@ -316,11 +463,11 @@ export default function NuevaRevision() {
   const datosGeneralesComplete = useMemo(() => {
     return Boolean(
       form.datosGenerales.unidad.trim() &&
-      form.datosGenerales.lugarArea.trim() &&
-      form.datosGenerales.alturaAproximada.trim() &&
-      form.datosGenerales.fecha &&
-      form.datosGenerales.horaInicio &&
-      form.datosGenerales.tiempoEstimadoMin.trim()
+        form.datosGenerales.lugarArea.trim() &&
+        form.datosGenerales.alturaAproximada.trim() &&
+        form.datosGenerales.fecha &&
+        form.datosGenerales.horaInicio &&
+        form.datosGenerales.tiempoEstimadoMin.trim()
     )
   }, [form.datosGenerales])
 
@@ -343,10 +490,12 @@ export default function NuevaRevision() {
   }, [form.proteccionCaidas])
 
   const requisitosComplete = useMemo(() => {
-    return form.requisitosAntesIniciar.areaDelimitada &&
+    return (
+      form.requisitosAntesIniciar.areaDelimitada &&
       form.requisitosAntesIniciar.inspeccionEquiposUtilizar &&
       form.requisitosAntesIniciar.inspeccionEpp &&
       form.requisitosAntesIniciar.sistemaComunicacion
+    )
   }, [form.requisitosAntesIniciar])
 
   const progressCount = [
@@ -853,7 +1002,11 @@ export default function NuevaRevision() {
             <label className="check-item" key={key}>
               <input
                 type="checkbox"
-                checked={form.equipoUtilizar[key as keyof FormState['equipoUtilizar']] as boolean}
+                checked={
+                  form.equipoUtilizar[
+                    key as keyof FormState['equipoUtilizar']
+                  ] as boolean
+                }
                 onChange={(e) =>
                   updateNestedField(
                     'equipoUtilizar',
@@ -903,7 +1056,11 @@ export default function NuevaRevision() {
             <label className="check-item" key={key}>
               <input
                 type="checkbox"
-                checked={form.proteccionCaidas[key as keyof FormState['proteccionCaidas']] as boolean}
+                checked={
+                  form.proteccionCaidas[
+                    key as keyof FormState['proteccionCaidas']
+                  ] as boolean
+                }
                 onChange={(e) =>
                   updateNestedField(
                     'proteccionCaidas',
@@ -980,7 +1137,11 @@ export default function NuevaRevision() {
             <label className="check-item" key={key}>
               <input
                 type="checkbox"
-                checked={form.condicionesClimaticas[key as keyof FormState['condicionesClimaticas']] as boolean}
+                checked={
+                  form.condicionesClimaticas[
+                    key as keyof FormState['condicionesClimaticas']
+                  ] as boolean
+                }
                 onChange={(e) =>
                   updateNestedField(
                     'condicionesClimaticas',
@@ -1024,7 +1185,11 @@ export default function NuevaRevision() {
             <label className="check-item" key={key}>
               <input
                 type="checkbox"
-                checked={form.requisitosAntesIniciar[key as keyof FormState['requisitosAntesIniciar']] as boolean}
+                checked={
+                  form.requisitosAntesIniciar[
+                    key as keyof FormState['requisitosAntesIniciar']
+                  ] as boolean
+                }
                 onChange={(e) =>
                   updateNestedField(
                     'requisitosAntesIniciar',
@@ -1066,22 +1231,40 @@ export default function NuevaRevision() {
           />
         </label>
 
-        <label className="upload-box">
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handlePhotosChange}
-            {...(isMobile ? { capture: 'environment' as const } : {})}
-          />
-          <div className="upload-box__content">
-            <ImagePlus size={22} />
-            <strong>
-              {isMobile ? 'Tomar o seleccionar foto' : 'Subir imágenes'}
-            </strong>
-            <span>Máximo {MAX_PHOTOS} fotos</span>
+        {isNativeMobile ? (
+          <div className="evidence-actions">
+            <button
+              type="button"
+              className="camera-button"
+              onClick={handleTakePhoto}
+              disabled={cameraBusy || photoFiles.length >= MAX_PHOTOS}
+            >
+              <CameraIcon size={20} />
+              <span>
+                {cameraBusy ? 'Abriendo cámara...' : 'Tomar foto con cámara'}
+              </span>
+            </button>
+
+            <p className="camera-help">
+              En celular se abrirá la cámara del dispositivo. Máximo {MAX_PHOTOS}{' '}
+              fotos.
+            </p>
           </div>
-        </label>
+        ) : (
+          <label className="upload-box">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handlePhotosChange}
+            />
+            <div className="upload-box__content">
+              <ImagePlus size={22} />
+              <strong>Subir imágenes</strong>
+              <span>Máximo {MAX_PHOTOS} fotos</span>
+            </div>
+          </label>
+        )}
 
         {photoPreviews.length > 0 && (
           <div className="photo-grid">
@@ -1117,6 +1300,60 @@ export default function NuevaRevision() {
       >
         {saving ? 'Enviando solicitud...' : 'Enviar solicitud'}
       </button>
+
+      {cameraPermissionModalOpen && (
+        <div
+          className="camera-modal-backdrop"
+          onClick={() => setCameraPermissionModalOpen(false)}
+        >
+          <div
+            className="camera-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="camera-modal__icon">
+              <CameraIcon size={22} />
+            </div>
+
+            <h3>Permiso de cámara requerido</h3>
+
+            <p>
+              Para tomar la fotografía desde el celular, esta aplicación necesita
+              acceso a la cámara.
+            </p>
+
+            {cameraPermissionDeniedForever ? (
+              <p className="camera-modal__warning">
+                Ya se rechazó el permiso. Ahora debe habilitarlo manualmente desde
+                la configuración del dispositivo.
+              </p>
+            ) : (
+              <p className="camera-modal__warning">
+                Presione continuar para solicitar el permiso.
+              </p>
+            )}
+
+            <div className="camera-modal__actions">
+              <button
+                type="button"
+                className="camera-modal__btn camera-modal__btn--ghost"
+                onClick={() => setCameraPermissionModalOpen(false)}
+              >
+                Cancelar
+              </button>
+
+              {!cameraPermissionDeniedForever && (
+                <button
+                  type="button"
+                  className="camera-modal__btn camera-modal__btn--primary"
+                  onClick={requestCameraPermissions}
+                >
+                  Continuar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
